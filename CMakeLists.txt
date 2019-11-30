@@ -133,9 +133,9 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(talker src/talker.cpp)
-target_link_libraries(talker ${catkin_LIBRARIES} ${OpenCV_LIBS})
-add_dependencies(talker line_follower_generate_messages_cpp)
+add_executable(main src/main.cpp)
+target_link_libraries(main ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_dependencies(main line_follower_generate_messages_cpp)
 
 add_executable(show_lines src/show_lines.cpp)
 target_link_libraries(show_lines ${catkin_LIBRARIES} ${OpenCV_LIBS})

@@ -2,6 +2,7 @@
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include "std_msgs/UInt8MultiArray.h"
 #include "sensor_msgs/Image.h"
 
 #include <cv_bridge/cv_bridge.h>
@@ -24,6 +25,9 @@ cv::Mat HLines_img;
 
 using namespace std;
 using namespace cv;
+
+ros::Publisher pub;
+std_msgs::UInt8MultiArray msg;
 
 
 Vec4i chooseLine(vector<Vec4i> linesP){
@@ -49,17 +53,39 @@ Vec4i chooseLine(vector<Vec4i> linesP){
 
 delta getError(Vec4i line){
   delta result = {ERROR,ERROR};
-  float dx = line[0] - line[2];
-  float dy = line[1] - line[3];
+  int X1 = line[1];
+  int X2 = line[3];
+  int Y1 = line[0];
+  int Y2 = line[2];
+  int dx = (Y2 - Y1);
+  int dy = (X2 - X1);
+  float a = 0;
+  float b = 0;
 
   // cout << "dx: " << dx << ", dy: " << dy << ", ";
   if(fabs(dx) < 0.00001) 
     return result;
 
-  result.angle = atan(dy / dx);
-  result.shift = line[1] - line[0]*result.angle;
-  cout << "angle: " << result.angle << ", shift: " << result.shift << endl;
+  a = (float)dy / (float)dx;
+  result.angle = atan2(dy , -dx);
+  cout << "a: " << a << ", atan: " << result.angle;
+  if(result.angle < 0)
+    result.angle += M_PI;
+  result.shift = line[3] - line[2]*result.angle;// - 256;
+
+  b = (Y2*X1 - Y1*X2)/dx;
+  cout << ",  b: " << b;
+  result.shift = (128-b)/a - 128;
+
+  cout << ",  angle: " << result.angle << ", shift: " << result.shift << endl;
   return result;
+}
+
+void sendSpeed(int8_t Ve, int8_t Vd){
+  msg.data.clear();
+  msg.data.push_back(Ve);
+  msg.data.push_back(Vd);
+  pub.publish(msg);
 }
 
 void getImage(const sensor_msgs::Image::ConstPtr& msg)
@@ -80,6 +106,8 @@ void getImage(const sensor_msgs::Image::ConstPtr& msg)
     getError(choosenLine);  
   }
 
+  sendSpeed(0,0);
+
 
   // for( size_t i = 0; i < linesP.size(); i++ )
   // {
@@ -88,9 +116,9 @@ void getImage(const sensor_msgs::Image::ConstPtr& msg)
   //       line( HLines_img, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, LINE_AA);
   // }
 
-  // Show results
-  // imshow("orginal", fliped_img);
   imshow("Probabilistic", HLines_img);
+  // flip(HLines_img,HLines_img, 0);
+  // imshow("fliped", HLines_img);
   waitKey(1);
 }
 
@@ -103,8 +131,15 @@ int main(int argc, char **argv)
   namedWindow("Probabilistic", WINDOW_AUTOSIZE); // Create Window
 
   ros::Subscriber sub = n.subscribe("image", 10, getImage);
+  pub = n.advertise<std_msgs::UInt8MultiArray>("robot_vel", 2);
   ros::spin();
 
+  msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+  msg.layout.dim[0].size = 2;
+  msg.layout.dim[0].stride = 1;
+  msg.layout.dim[0].label = "robot_velocity"; // or whatever name you typically use to index vec1
+
   return 0;
+
 }
 
