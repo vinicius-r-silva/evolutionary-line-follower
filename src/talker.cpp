@@ -51,7 +51,9 @@ delta getError(Vec4i line){
   delta result = {ERROR,ERROR};
   float dx = line[0] - line[2];
   float dy = line[1] - line[3];
-  if(dx < 0.0001)
+
+  // cout << "dx: " << dx << ", dy: " << dy << ", ";
+  if(fabs(dx) < 0.00001) 
     return result;
 
   result.angle = atan(dy / dx);
