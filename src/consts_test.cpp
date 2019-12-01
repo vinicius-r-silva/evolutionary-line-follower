@@ -60,6 +60,27 @@ std_msgs::UInt8MultiArray msg;
 robot_pos robotPos;
 
 
+const int alpha_slider_v0_max = 252;
+const int alpha_slider_linear_max = 10000;
+const int alpha_slider_angular_max = 10000;
+int alpha_slider_v0;
+int alpha_slider_linear;
+int alpha_slider_angular;
+
+static void on_trackbar_v0( int, void* )
+{
+}
+
+static void on_trackbar_linear( int, void* )
+{
+}
+
+static void on_trackbar_angular( int, void* )
+{
+}
+
+
+
 //-------------------------------------------FUNCTIONS--------------------------------------------//
 //sends a message to the robot be reset
 void reset_robot();
@@ -110,8 +131,6 @@ robot_vel getMotorsVelocity(delta error, robot_consts consts){
 
   result.Ve = Ve;
   result.Vd = Vd;
-  result.Ve = 0;
-  result.Vd = 0;
   return result;
 }
 
@@ -129,7 +148,9 @@ bool isTheRobotInReverse(){
 //----------------------------------------------MAIN---------------------------------------------//
 int main(int argc, char **argv){
   ros::init(argc, argv, "main");
-  namedWindow("Probabilistic", WINDOW_AUTOSIZE); // Create Window
+  // namedWindow("Probabilistic", WINDOW_AUTOSIZE); // Create Window
+  namedWindow("Probabilistic", WINDOW_NORMAL); // Create Window
+  resizeWindow("Probabilistic", 500, 500); // Create Window
 
 
   ros::NodeHandle n;
@@ -146,6 +167,26 @@ int main(int argc, char **argv){
   msg.layout.dim[0].size = 2;
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
+
+
+  alpha_slider_v0 = 126;
+  char TrackbarName_v0[50];
+  sprintf( TrackbarName_v0, "Alpha v0 x %d", alpha_slider_v0_max );
+  createTrackbar( TrackbarName_v0, "Probabilistic", &alpha_slider_v0, alpha_slider_v0_max, on_trackbar_v0 );
+  on_trackbar_v0( alpha_slider_v0, 0 );
+
+  alpha_slider_linear = 5000;
+  char TrackbarName_linear[50];
+  sprintf( TrackbarName_linear, "Alpha linear x %d", alpha_slider_linear_max );
+  createTrackbar( TrackbarName_linear, "Probabilistic", &alpha_slider_linear, alpha_slider_linear_max, on_trackbar_linear );
+  on_trackbar_linear( alpha_slider_linear, 0);
+
+  alpha_slider_angular = 5000;
+  char TrackbarName_angular[50];
+  sprintf( TrackbarName_angular, "Alpha angular x %d", alpha_slider_angular_max );
+  createTrackbar( TrackbarName_angular, "Probabilistic", &alpha_slider_angular, alpha_slider_angular_max, on_trackbar_angular );
+  on_trackbar_angular( alpha_slider_angular, 0 );
+
 
   ros::spin();
   return 0;
@@ -237,7 +278,7 @@ void sendSpeed(robot_vel robotVel){
 void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
   raw_img =  cv_bridge::toCvShare(msg, "bgr8")->image; //get the image
 
-  robot_consts consts = {0,0.00,-5};
+  robot_consts consts = {(uint8_t)(alpha_slider_v0-126),((float)(alpha_slider_linear-5000))/100,((float)(alpha_slider_angular-5000))/100};
   robot_vel robotVel = {0,0};                //later used to send the robot motor's speed
   delta     robot_error;
 
