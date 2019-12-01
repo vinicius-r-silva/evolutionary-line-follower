@@ -141,6 +141,10 @@ add_executable(show_lines src/show_lines.cpp)
 target_link_libraries(show_lines ${catkin_LIBRARIES} ${OpenCV_LIBS})
 add_dependencies(show_lines line_follower_generate_messages_cpp)
 
+add_executable(reset_robot src/reset_robot.cpp)
+target_link_libraries(reset_robot ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_dependencies(reset_robot line_follower_generate_messages_cpp)
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/line_follower.cpp
