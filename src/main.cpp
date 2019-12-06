@@ -39,7 +39,7 @@ typedef struct{
 } robot_pos;
 
 typedef struct{
-  uint8_t Ve;
+  int16_t Ve;
   uint8_t Vd;
 } robot_vel;
 
