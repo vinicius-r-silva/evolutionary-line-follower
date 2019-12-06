@@ -26,11 +26,18 @@ using namespace cv;
 #define QUADRANT_3 3
 #define QUADRANT_4 4
 
+#define TAM_POPULATION 32
+#define TAM_BEST 3
+
+#define LIMIT_VALUE_V0 250
+#define LIMIT_VALUE_LINEAR_KP 10
+#define LIMIT_VALUE_ANGULAR_KP 220
+
 //--------------------------------------------GLOBALS--------------------------------------------//
-typedef struct{
-  float shift;
-  float angle;
-} delta;
+  typedef struct{
+    float shift;
+    float angle;
+  } delta;
 
 typedef struct{
   float x;
@@ -89,6 +96,9 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg);
 //updates the current positon of the robot
 void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg);
 
+void initBestPopulation(robot_consts **indivBest);
+void initPopulation(robot_consts **indiv);
+
 robot_vel getMotorsVelocity(delta error, robot_consts consts){
   robot_vel result;
   float errorSum = consts.linear_kp * error.shift  +  consts.angular_kp * error.angle;
@@ -129,6 +139,18 @@ bool isTheRobotInReverse(){
 //----------------------------------------------MAIN---------------------------------------------//
 int main(int argc, char **argv){
   ros::init(argc, argv, "main");
+
+  robot_consts *indv[TAM_POPULATION];
+  robot_consts *best_ind[TAM_BEST];
+
+  initPopulation(indv);
+  initBestPopulation(best_ind);
+
+  cout<< best_ind[0]->v0 << endl;;
+
+
+
+
   namedWindow("Probabilistic", WINDOW_AUTOSIZE); // Create Window
 
 
@@ -147,6 +169,7 @@ int main(int argc, char **argv){
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
 
+  ROS_INFO("%d", best_ind[0]->v0);
   ros::spin();
   return 0;
 }
@@ -272,3 +295,39 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos.y = msg->data[1];
   robotPos.theta = msg->data[2];
 }
+
+
+//Inicio AG
+//Iniciando vetores de inidividuos(populacao) e de melhores(best)
+//returns -1 <= x <= 1
+double randomize(){
+  double randon = rand() % 2000;
+  return (randon/1000) - 1;
+}
+
+void initBestPopulation(robot_consts **indivBest){
+  srand(time(0));
+  for(int i = 0; i < TAM_BEST; i++){
+    indivBest[i] = (robot_consts*)malloc(sizeof(robot_consts));
+    indivBest[i]->v0 = (int) (((double)LIMIT_VALUE_V0) * randomize());
+    indivBest[i]->linear_kp = (float) LIMIT_VALUE_LINEAR_KP * randomize();
+    indivBest[i]->angular_kp = (float) LIMIT_VALUE_ANGULAR_KP * randomize();
+    ROS_INFO("%f", randomize());
+  }
+}
+
+void initPopulation(robot_consts **indiv){
+  for(int i = 0; i < TAM_BEST; i++){
+    indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
+    indiv[i]->v0 = (int) 0.0;
+    indiv[i]->linear_kp = 0.0;
+    indiv[i]->angular_kp = 0.0;
+  }
+}
+
+void calc_fitness(){
+}
+
+void cross(){
+}
+
