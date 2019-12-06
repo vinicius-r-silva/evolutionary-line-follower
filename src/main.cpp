@@ -34,10 +34,10 @@ using namespace cv;
 #define LIMIT_VALUE_ANGULAR_KP 220
 
 //--------------------------------------------GLOBALS--------------------------------------------//
-  typedef struct{
-    float shift;
-    float angle;
-  } delta;
+typedef struct{
+  float shift;
+  float angle;
+} delta;
 
 typedef struct{
   float x;
@@ -54,6 +54,13 @@ typedef struct{
   uint8_t v0;
   float linear_kp;
   float angular_kp;
+  uint8_t qtdQuadrantes;     //Soma 1 toda vez que avança quadrante (2 voltas), sub 1 toda vez que volta quadrante
+  uint8_t ultimoQuarante;    //
+  uint8_t maxQtdQuadrante;
+
+  uint64_t tempoNoQuadrante; //Soma 
+  uint64_t framesPerdidos;   //Soma 1 toda vez que existe um frame sem linha, reseta quando encontra linha
+
 } robot_consts;
 
 cv::Mat canny;
@@ -123,17 +130,6 @@ robot_vel getMotorsVelocity(delta error, robot_consts consts){
   result.Ve = 0;
   result.Vd = 0;
   return result;
-}
-
-int getQuadrant(){
-  
-  return QUADRANT_1;
-}
-
-bool isTheRobotInReverse(){
-
-
-  return false;
 }
 
 //----------------------------------------------MAIN---------------------------------------------//
@@ -282,6 +278,9 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
       sendSpeed(robotVel);                     //send the motor speed to the robot
     }
   }
+  else{
+
+  }
 
   imshow("Probabilistic", HLines_img);       //shows the image with the choosen line printed on it
   waitKey(1);
@@ -294,6 +293,11 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos.x = msg->data[0];
   robotPos.y = msg->data[1];
   robotPos.theta = msg->data[2];
+
+  //pega estacao
+  //ve se morreu
+  //se morreu, troca numero da estacao
+
 }
 
 
