@@ -44,7 +44,7 @@ typedef struct{
 } robot_vel;
 
 typedef struct{
-  uint8_t v0;
+  int16_t v0;
   float linear_kp;
   float angular_kp;
 } robot_consts;
@@ -60,9 +60,9 @@ std_msgs::UInt8MultiArray msg;
 robot_pos robotPos;
 
 
-const int alpha_slider_v0_max = 252;
-const int alpha_slider_linear_max = 10000;
-const int alpha_slider_angular_max = 10000;
+const int alpha_slider_v0_max = 500;
+const int alpha_slider_linear_max = 2000;
+const int alpha_slider_angular_max = 22000;
 int alpha_slider_v0;
 int alpha_slider_linear;
 int alpha_slider_angular;
@@ -169,19 +169,19 @@ int main(int argc, char **argv){
   msg.layout.dim[0].label = "robot_velocity";
 
 
-  alpha_slider_v0 = 126;
+  alpha_slider_v0 = alpha_slider_v0_max/2;
   char TrackbarName_v0[50];
   sprintf( TrackbarName_v0, "Alpha v0 x %d", alpha_slider_v0_max );
   createTrackbar( TrackbarName_v0, "Probabilistic", &alpha_slider_v0, alpha_slider_v0_max, on_trackbar_v0 );
   on_trackbar_v0( alpha_slider_v0, 0 );
 
-  alpha_slider_linear = 5000;
+  alpha_slider_linear = alpha_slider_linear_max/2;
   char TrackbarName_linear[50];
   sprintf( TrackbarName_linear, "Alpha linear x %d", alpha_slider_linear_max );
   createTrackbar( TrackbarName_linear, "Probabilistic", &alpha_slider_linear, alpha_slider_linear_max, on_trackbar_linear );
   on_trackbar_linear( alpha_slider_linear, 0);
 
-  alpha_slider_angular = 5000;
+  alpha_slider_angular = alpha_slider_angular_max/2;
   char TrackbarName_angular[50];
   sprintf( TrackbarName_angular, "Alpha angular x %d", alpha_slider_angular_max );
   createTrackbar( TrackbarName_angular, "Probabilistic", &alpha_slider_angular, alpha_slider_angular_max, on_trackbar_angular );
@@ -268,7 +268,7 @@ void sendSpeed(robot_vel robotVel){
   msg.data.clear();                //creates the msg...
   msg.data.push_back(robotVel.Ve);
   msg.data.push_back(robotVel.Vd);
-  speed_pub.publish(msg);                //send it
+  speed_pub.publish(msg);          //send it
 }
 
 
@@ -278,7 +278,8 @@ void sendSpeed(robot_vel robotVel){
 void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
   raw_img =  cv_bridge::toCvShare(msg, "bgr8")->image; //get the image
 
-  robot_consts consts = {(uint8_t)(alpha_slider_v0-126),((float)(alpha_slider_linear-5000))/100,((float)(alpha_slider_angular-5000))/100};
+
+  robot_consts consts = {(int16_t)(alpha_slider_v0-alpha_slider_v0_max/2),((float)(alpha_slider_linear-alpha_slider_linear_max/2))/100,((float)(alpha_slider_angular-alpha_slider_angular_max/2))/100};
   robot_vel robotVel = {0,0};                //later used to send the robot motor's speed
   delta     robot_error;
 
