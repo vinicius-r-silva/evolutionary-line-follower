@@ -87,11 +87,11 @@ std_msgs::UInt8MultiArray msg;
 robot_pos robotPos;
 
 //Vetor de individuos (Populacao)
-robot_consts *indv[TAM_POPULATION];
+robot_consts *indiv[TAM_POPULATION];
 int pos_indv_atual;
 
 //Vetor dos melhores individuos sera utilizado para a reproducao (Best)
-robot_consts *best_ind[TAM_BEST];
+robot_consts *indivBest[TAM_BEST];
 
 
 
@@ -181,8 +181,8 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "main");
   srand(time(0));
 
-  initPopulation(indv);
-  initBestPopulation(best_ind);
+  initPopulation(indiv);
+  initBestPopulation(indivBest);
 
   namedWindow("Probabilistic", WINDOW_AUTOSIZE); // Create Window
 
@@ -201,7 +201,7 @@ int main(int argc, char **argv){
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
 
-  ROS_INFO("%.3f", best_ind[0]->angular_kp);
+  ROS_INFO("%.3f", indivBest[0]->angular_kp);
   ros::spin();
   return 0;
 }
@@ -331,11 +331,11 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos.theta = msg->data[2];
 
   uint8_t station = 1;//pega estacao do individuo
-  bool kill_indv = check_kill_indiv(indv[pos_indv_atual]); //ver se deve morrer
+  bool kill_indv = check_kill_indiv(indiv[pos_indv_atual]); //ver se deve morrer
   
   if(kill_indv){
     //reset_robot();
-    calc_fitness(indv[pos_indv_atual++]); // calcula o fitness do robo atual (que morreu)
+    calc_fitness(indiv[pos_indv_atual++]); // calcula o fitness do robo atual (que morreu)
     
     //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
@@ -399,9 +399,9 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
   filhos[2]->angular_kp = pai->angular_kp;
 
   rand = randomize(1, 100, 0);      //ver mutacao
-  filhos[2]->v0         = mae->v0;
-  filhos[2]->linear_kp  = mae->linear_kp;
-  filhos[2]->angular_kp = pai->angular_kp;
+  filhos[3]->v0         = mae->v0;
+  filhos[3]->linear_kp  = mae->linear_kp;
+  filhos[3]->angular_kp = pai->angular_kp;
 }
 
 
