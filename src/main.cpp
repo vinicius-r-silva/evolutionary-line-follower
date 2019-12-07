@@ -26,16 +26,16 @@ using namespace cv;
 #define QUADRANT_3 3
 #define QUADRANT_4 4
 
-#define TAM_POPULATION 36
+#define TAM_POPULATION 48 //36 filhos + 12 best(nao eh necessario rodar dnovo os 12 best pois ja posuem fitness)
 #define TAM_BEST 12
-#define CHANCE_MUTACAO 4
+#define CHANCE_MUTACAO 5
 
 #define MAX_VALUE_V0 250
 #define MAX_VALUE_LINEAR_KP 10
 #define MAX_VALUE_ANGULAR_KP 220
 
-#define MAX_FRAMES_POR_QUADRANTE 0
-#define MAX_FRAMES_SEM_LINHA 0
+#define LIMIT_FRAMES_POR_QUADRANTE 0
+#define LIMIT_FRAMES_SEM_LINHA 0
 
 //--------------------------------------------GLOBALS--------------------------------------------//
 typedef struct{
@@ -142,12 +142,12 @@ bool check_kill_indiv(robot_consts *indiv);
 void calc_fitness(robot_consts *indiv);
 
 
-//Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 4 indivios novos
+//Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 6 individuos novos
 void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos);
 
 
 //retorna valor entre inicio_range e final_range com precisao de x casas 
-double randomize(int inicio_range, int final_range, int casas_precisao);
+double randomize(float inicio_range, float final_range, int casas_precisao);
 
 
 robot_vel getMotorsVelocity(delta error, robot_consts consts){
@@ -181,8 +181,29 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "main");
   srand(time(0));
 
-  initPopulation(indiv);
   initBestPopulation(indivBest);
+  initPopulation(indiv);
+  
+  ROS_INFO("INICIAR INDIVIDUOS\n");
+
+  robot_consts **vet;
+  for(int i = 0; i < 6; i++){
+    vet = (robot_consts**) malloc(6 * sizeof(robot_consts*));
+    vet[0] = indiv[6*i];
+    vet[1] = indiv[(6*i)+1];
+    vet[2] = indiv[(6*i)+2];
+    vet[3] = indiv[(6*i)+3];
+    vet[4] = indiv[(6*i)+4];
+    vet[5] = indiv[(6*i)+5];
+    indiv[36 + (2*i)] = indivBest[2*i];
+    indiv[37 + (2*i)] = indivBest[(2*i)+1];
+    cross(indivBest[2*i], indivBest[(2*i)+1], vet);
+    free(vet);
+  }
+
+  for(int i = 0; i < TAM_POPULATION; i++){
+    ROS_INFO("INDIV[%d]: %d | %.2f | %.2f\n",i, indiv[i]->v0, indiv[i]->linear_kp, indiv[i]->angular_kp);    
+  }
 
   namedWindow("Probabilistic", WINDOW_AUTOSIZE); // Create Window
 
@@ -201,7 +222,6 @@ int main(int argc, char **argv){
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
 
-  ROS_INFO("%.3f", indivBest[0]->angular_kp);
   ros::spin();
   return 0;
 }
@@ -335,8 +355,13 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   
   if(kill_indv){
     //reset_robot();
-    calc_fitness(indiv[pos_indv_atual++]); // calcula o fitness do robo atual (que morreu)
+    calc_fitness(indiv[pos_indv_atual]); // calcula o fitness do robo atual (que morreu)
     
+    //calcular somente os que ainda nao possuem fitness
+    while(pos_indv_atual < TAM_POPULATION && indiv[pos_indv_atual]->fitness != -1){
+      pos_indv_atual++;
+    }
+
     //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
       //marcar pos_indv_atual na estacao
@@ -348,10 +373,12 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 }
 
 
-double randomize(int inicio_range, int final_range, int casas_precisao){
-  int div_value = pow(10, casas_precisao) * final_range;
-  int total_ran = final_range - inicio_range;
-  double randon = rand() % (total_ran * div_value);
+double randomize(float inicio_range, float final_range, int casas_precisao){
+  int div_value = final_range * pow(10, casas_precisao);
+  int tot_range = final_range - inicio_range;
+
+  double randon = rand() % (tot_range * div_value);
+  
   return (randon / div_value) + inicio_range;
 }
 
@@ -362,16 +389,18 @@ void initBestPopulation(robot_consts **indivBest){
     indivBest[i]->v0=(uint8_t)((float) MAX_VALUE_V0         * randomize(-1, 1, 3));
     indivBest[i]->linear_kp  = (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
     indivBest[i]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
+    indivBest[i]->fitness    = -1;
   }
 }
 
 
 void initPopulation(robot_consts **indiv){
-  for(int i = 0; i < TAM_BEST; i++){
+  for(int i = 0; i < TAM_POPULATION; i++){
     indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
     indiv[i]->v0         = 0;
     indiv[i]->linear_kp  = 0.0;
     indiv[i]->angular_kp = 0.0;
+    indiv[i]->fitness    = -1;
   }
 }
 
@@ -383,29 +412,67 @@ void calc_fitness(robot_consts *indiv){
 
 
 void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
-  int rand = randomize(1, 100, 0);  //ver mutacao
-  filhos[0]->v0         = pai->v0;
-  filhos[0]->linear_kp  = pai->linear_kp;
-  filhos[0]->angular_kp = mae->angular_kp;
+  int rand;
+  int mut_v0, mut_lin, mut_ang;
+
+  //2 pai x 1 mae
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
+  filhos[0]->v0         = pai->v0         + mut_v0;
+  filhos[0]->linear_kp  = pai->linear_kp  + mut_lin;
+  filhos[0]->angular_kp = mae->angular_kp + mut_ang;
   
-  rand = randomize(1, 100, 0);      //ver mutacao
-  filhos[1]->v0         = pai->v0;
-  filhos[1]->linear_kp  = mae->linear_kp;
-  filhos[1]->angular_kp = mae->angular_kp;
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
+  filhos[1]->v0         = pai->v0         + mut_v0;
+  filhos[1]->linear_kp  = mae->linear_kp  + mut_lin;
+  filhos[1]->angular_kp = pai->angular_kp + mut_ang;
 
-  rand = randomize(1, 100, 0);      //ver mutacao
-  filhos[2]->v0         = mae->v0;
-  filhos[2]->linear_kp  = pai->linear_kp;
-  filhos[2]->angular_kp = pai->angular_kp;
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
+  filhos[2]->v0         = mae->v0         + mut_v0;
+  filhos[2]->linear_kp  = pai->linear_kp  + mut_lin;
+  filhos[2]->angular_kp = pai->angular_kp + mut_ang;
+  
+  //1 pai x 2 mae
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
+  filhos[3]->v0         = mae->v0         + mut_v0;
+  filhos[3]->linear_kp  = mae->linear_kp  + mut_lin;
+  filhos[3]->angular_kp = pai->angular_kp + mut_ang;
 
-  rand = randomize(1, 100, 0);      //ver mutacao
-  filhos[3]->v0         = mae->v0;
-  filhos[3]->linear_kp  = mae->linear_kp;
-  filhos[3]->angular_kp = pai->angular_kp;
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
+  filhos[4]->v0         = mae->v0         + mut_v0;
+  filhos[4]->linear_kp  = pai->linear_kp  + mut_lin;
+  filhos[4]->angular_kp = mae->angular_kp + mut_ang;
+
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
+  filhos[5]->v0         = pai->v0         + mut_v0;
+  filhos[5]->linear_kp  = mae->linear_kp  + mut_lin;
+  filhos[5]->angular_kp = mae->angular_kp + mut_ang;
+
 }
 
 
 bool check_kill_indiv(robot_consts *indiv){
-  //ind
+  
+  if(indiv->framesPerdidos >= LIMIT_FRAMES_SEM_LINHA || indiv->tempoNoQuadrante >= LIMIT_FRAMES_POR_QUADRANTE){
+       return true;
+  }
+
   return false;
 }
