@@ -1,0 +1,30 @@
+#ifndef AG_H
+#define AG_H
+
+#include "globals.h"
+
+//Inicia a populacao de individuos
+void initBestPopulation(robot_consts **indivBest);
+
+
+//Inicia randomicamente a populacao de melhores
+void initPopulation(robot_consts **indiv);
+
+
+//Verifica se individuo deve morrer
+bool check_kill_indiv(robot_consts *indiv);
+
+
+//Calcula o fitness do individuo
+void calc_fitness(robot_consts *indiv);
+
+
+//Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 4 indivios novos
+void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos);
+
+
+//retorna valor entre inicio_range e final_range com precisao de x casas 
+double randomize(int inicio_range, int final_range, int casas_precisao);
+
+
+#endif
