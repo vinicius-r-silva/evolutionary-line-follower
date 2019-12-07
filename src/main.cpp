@@ -12,6 +12,11 @@
 #include <sensor_msgs/image_encodings.h>
 #include <image_transport/image_transport.h>
 
+#include "headers/globals.h"
+#include "headers/image_processing.h"
+#include "headers/robot_control.h"
+#include "headers/ag.h"
+
 using namespace std;
 using namespace cv;
 
@@ -76,15 +81,19 @@ typedef struct{
 
 } robot_consts; 
 
+//-------------------------------------------GLOBALS--------------------------------------------//
 cv::Mat canny;
 cv::Mat raw_img;
 cv::Mat fliped_img;
 cv::Mat HLines_img;
 
-ros::Publisher speed_pub;
+ros::Publisher *reset_pub;
+ros::Publisher *speed_pub;
 std_msgs::UInt8MultiArray msg;
 
-robot_pos robotPos;
+robot_pos *robotPos[TAM_POPULATION];
+
+int estacao2robot[TAM_ESTACOES];
 
 //Vetor de individuos (Populacao)
 robot_consts *indiv[TAM_POPULATION];
@@ -94,31 +103,7 @@ int pos_indv_atual;
 robot_consts *indivBest[TAM_BEST];
 
 
-
 //-------------------------------------------FUNCTIONS--------------------------------------------//
-//sends a message to the robot be reset
-void reset_robot();
-
-
-//giving a vector of lines, choose the better one to be followed
-//the best line is the where the first coordiante is the futher away from the image
-Vec4i chooseLine(vector<Vec4i> linesP);
-
-
-//given a line, find the robot error
-//the erro is given by the line's angle in rads and by where the line touchs the botton of the image
-delta getError(Vec4i line);
-
-
-//given the left and right motors velocities, send it
-void sendSpeed(robot_vel robotVel);
-
-
-//callback from getImage topic
-//receives the image from the robot onboard camera
-//detects the black line in the image, if there is any
-void getImage_callback(const sensor_msgs::Image::ConstPtr& msg);
-
 
 //callback from robot_pos topic
 //updates the current positon of the robot
@@ -176,28 +161,30 @@ robot_vel getMotorsVelocity(delta error, robot_consts consts){
   return result;
 }
 
-//----------------------------------------------MAIN---------------------------------------------//
-int main(int argc, char **argv){
-  ros::init(argc, argv, "main");
-  srand(time(0));
 
-  initBestPopulation(indivBest);
+//-------------------------------------------------------MAIN--------------------------------------------------------//
+int main(int argc, char **argv){
+  int i = 0;
+  ros::init(argc, argv, "main");
+
+  srand(time(0));
   initPopulation(indiv);
+  initBestPopulation(indivBest);
   
   ROS_INFO("INICIAR INDIVIDUOS\n");
 
   robot_consts **vet;
-  for(int i = 0; i < 6; i++){
+  for(int j = 0; j < 6; j++){
     vet = (robot_consts**) malloc(6 * sizeof(robot_consts*));
-    vet[0] = indiv[6*i];
-    vet[1] = indiv[(6*i)+1];
-    vet[2] = indiv[(6*i)+2];
-    vet[3] = indiv[(6*i)+3];
-    vet[4] = indiv[(6*i)+4];
-    vet[5] = indiv[(6*i)+5];
-    indiv[36 + (2*i)] = indivBest[2*i];
-    indiv[37 + (2*i)] = indivBest[(2*i)+1];
-    cross(indivBest[2*i], indivBest[(2*i)+1], vet);
+    vet[0] = indiv[6*j];
+    vet[1] = indiv[(6*j)+1];
+    vet[2] = indiv[(6*j)+2];
+    vet[3] = indiv[(6*j)+3];
+    vet[4] = indiv[(6*j)+4];
+    vet[5] = indiv[(6*j)+5];
+    indiv[36 + (2*j)] = indivBest[2*j];
+    indiv[37 + (2*j)] = indivBest[(2*j)+1];
+    cross(indivBest[2*j], indivBest[(2*j)+1], vet);
     free(vet);
   }
 
@@ -205,16 +192,39 @@ int main(int argc, char **argv){
     ROS_INFO("INDIV[%d]: %d | %.2f | %.2f\n",i, indiv[i]->v0, indiv[i]->linear_kp, indiv[i]->angular_kp);    
   }
 
-  namedWindow("Probabilistic", WINDOW_AUTOSIZE); // Create Window
+  char windowName[] = "estacaoX";
+  for(i = 0; i < TAM_ESTACOES; i++){
+    windowName[7] = i + '0';
+    namedWindow(windowName, WINDOW_AUTOSIZE); // Create Window
+    moveWindow(windowName, 20 +(i%2) * 310,20 + (i/2)*200);
+  }
+
+  for(i = 0; i < TAM_ESTACOES; i++){
+    estacao2robot[i] = i;
+  }
 
   ros::NodeHandle n;
-  robotPos.x = 0;
-  robotPos.y = 0;
-  robotPos.theta = 0;
+  for(i = 0; i < TAM_POPULATION; i++){
+    robotPos[i] = (robot_pos*)malloc(sizeof(robot_pos));
+    robotPos[i]->x = 0;
+    robotPos[i]->y = 0;
+    robotPos[i]->theta = 0;
+  }
 
-  ros::Subscriber image_sub = n.subscribe("image", 1, getImage_callback);  //subscrive to \image topic
-  ros::Subscriber position_sub = n.subscribe("robot_pos", 1, getPosition_callback);  //subscrive to \robot_pos topic (gets the robot current position)
-  speed_pub = n.advertise<std_msgs::UInt8MultiArray>("robot_vel", 1);     //create publisher to \robot_vel topic (sets robot motor's velocity)
+  ros::Subscriber image_sub = n.subscribe("image", 10, getImage_callback);  //subscrive to \image topic
+  ros::Subscriber position_sub = n.subscribe("robot_pos", 10, getPosition_callback);  //subscrive to \robot_pos topic (gets the robot current position)
+  
+
+  char speed_pub_topic[] = "robotX_vel";
+  char reset_pub_topic[] = "robotX_reset";
+  reset_pub = (ros::Publisher*)calloc(TAM_ESTACOES, sizeof(ros::Publisher));
+  speed_pub = (ros::Publisher*)calloc(TAM_ESTACOES, sizeof(ros::Publisher));
+  for(i = 0; i < TAM_ESTACOES; i++){
+    speed_pub_topic[5] = i + '0';
+    reset_pub_topic[5] = i + '0';
+    speed_pub[i] = n.advertise<std_msgs::UInt8MultiArray>(speed_pub_topic, 10); //create publisher to \robot_vel topic (sets robot motor's velocity)
+    reset_pub[i] = n.advertise<std_msgs::Bool>(reset_pub_topic, 10);
+  }
 
   //create the message to carry the robot motor's velocity
   msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
@@ -222,135 +232,32 @@ int main(int argc, char **argv){
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
 
+  //ROS_INFO("%.3f", indivBest[0]->angular_kp);
   ros::spin();
   return 0;
 }
 
 
-//-------------------------------------------FUNCTIONS--------------------------------------------//
-//sends a message to the robot be reset
-void reset_robot(){
-  ros::NodeHandle n;
-  ros::Publisher reset_pub;
-  reset_pub = n.advertise<std_msgs::Bool>("robot_reset", 1);
-
-  std_msgs::Bool msg;
-  msg.data = true;
-  reset_pub.publish(msg);   
-}
-
-
-//giving a vector of lines, choose the better one to be followed
-//the best line is the where the first coordiante is the futher away from the image
-Vec4i chooseLine(vector<Vec4i> linesP){
-  Vec4i result;
-  result[0] = linesP[0][0];
-  result[1] = linesP[0][1];
-  result[2] = linesP[0][2];
-  result[3] = linesP[0][3];
-
-  Vec4i l;
-  for( size_t i = 0; i < linesP.size(); i++ )
-  {
-      l = linesP[i];
-      if(l[0] < result[0]){
-        result[0] = l[0];
-        result[1] = l[1];
-        result[2] = l[2];
-        result[3] = l[3];
-      }
-  }
-
-  return result;
-}
-
-
-//given a line, find the robot error
-//the erro is given by the line's angle in rads and by where the line touchs the botton of the image
-delta getError(Vec4i line){
-  delta result = {ERROR,ERROR}; //init the error variable
-  int X1 = line[1];             //sets the point's values
-  int X2 = line[3];
-  int Y1 = line[0];
-  int Y2 = line[2];
-  int dx = (Y2 - Y1);
-  int dy = (X2 - X1);
-  float a = 0;
-  float b = 0;
-
-  if(fabs(dx) < 0.00001)       //if dx is to low, the following calculation wont work, thus return error
-    return result;
-
-  a = (float)dy / (float)dx;   //gets the angular coeficient
-  b = (Y2*X1 - Y1*X2)/dx;      //gets the linear coeficient
-
-  result.angle = atan2(dy , -dx); //calculates the angle of the line
-  if(result.angle < 0)            
-    result.angle += M_PI;         //if the angle is negative, make it positive
-
-  result.angle -= M_PI/2;
-  result.shift = (128-b)/a - 128; //calculates where the line touch the botton of the image (y = a*x + b, where y = 128)
-
-  //for debugging, print the error
-  cout << "a: " << a  << ",  b: " << b << ",  angle: " << result.angle << ", shift: " << result.shift << endl;
-  return result;
-}
-
-
-//given the left and right motors velocities, send it
-void sendSpeed(robot_vel robotVel){
-  msg.data.clear();                //creates the msg...
-  msg.data.push_back(robotVel.Ve);
-  msg.data.push_back(robotVel.Vd);
-  speed_pub.publish(msg);                //send it
-}
-
-
-//callback from getImage topic
-//receives the image from the robot onboard camera
-//detects the black line in the image, if there is any
-void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
-  raw_img =  cv_bridge::toCvShare(msg, "bgr8")->image; //get the image
-
-  robot_consts consts = {0,0.00,-5};
-  robot_vel robotVel = {0,0};                //later used to send the robot motor's speed
-  delta     robot_error;
-
-  flip(raw_img,fliped_img, 0);               //since the raw image is fliped, the unflip it
-  Canny(fliped_img, canny, 50, 200, 3);      //apply canny filter to after aply the HoughLines algorithm
-  cvtColor(canny,HLines_img,COLOR_GRAY2BGR); //HLines_img is the image where is going to b draw the lines detected in the canny image
-
-  vector<Vec4i> linesP;                      //stores all the detected lines
-  Vec4i choosenLine;                         //store the image choosen to be followed by the robot
-  HoughLinesP(canny, linesP, 1, CV_PI/180, HoughLineTH, 30, 10 ); //apply the HoughLines algorithm to detect the lines inside the image
-
-  if(linesP.size() > 0){                     //if there is at least one line detect, then...
-    choosenLine = chooseLine(linesP);        //choose the better line to be followed (gives preference to the line followed in the previously frame)
-    line( HLines_img, Point(choosenLine[0], choosenLine[1]), Point(choosenLine[2], choosenLine[3]), Scalar(255,0,0), 3, LINE_AA); //print the choosen line
-    robot_error = getError(choosenLine);     //given the choosen line, get the robot error
-
-    if(robot_error.angle != ERROR){
-      robotVel = getMotorsVelocity(robot_error, consts);
-      sendSpeed(robotVel);                     //send the motor speed to the robot
-    }
-  }
-  else{
-
-  }
-
-  imshow("Probabilistic", HLines_img);       //shows the image with the choosen line printed on it
-  waitKey(1);
-}
+//-------------------------------------------------------FUNCTIONS-------------------------------------------------------//
 
 
 //callback from robot_pos topic
 //updates the current positon of the robot
 void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
-  robotPos.x = msg->data[0];
-  robotPos.y = msg->data[1];
-  robotPos.theta = msg->data[2];
+  int estacao = msg->data[0]; //pega estacao do individuo
+  int robot = estacao2robot[estacao];
 
-  uint8_t station = 1;//pega estacao do individuo
+  if(robot == -1)
+    return;
+
+  if(estacao != 0)
+    return;
+
+  int quadrante = msg->data[1];
+
+  robotPos[robot]->x = msg->data[2];
+  robotPos[robot]->y = msg->data[3];
+  robotPos[robot]->theta = msg->data[4];
   bool kill_indv = check_kill_indiv(indiv[pos_indv_atual]); //ver se deve morrer
   
   if(kill_indv){
