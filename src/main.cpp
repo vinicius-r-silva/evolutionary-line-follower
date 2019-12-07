@@ -26,12 +26,16 @@ using namespace cv;
 #define QUADRANT_3 3
 #define QUADRANT_4 4
 
-#define TAM_POPULATION 32
-#define TAM_BEST 3
+#define TAM_POPULATION 36
+#define TAM_BEST 12
+#define CHANCE_MUTACAO 4
 
-#define LIMIT_VALUE_V0 250
-#define LIMIT_VALUE_LINEAR_KP 10
-#define LIMIT_VALUE_ANGULAR_KP 220
+#define MAX_VALUE_V0 250
+#define MAX_VALUE_LINEAR_KP 10
+#define MAX_VALUE_ANGULAR_KP 220
+
+#define MAX_FRAMES_POR_QUADRANTE 0
+#define MAX_FRAMES_SEM_LINHA 0
 
 //--------------------------------------------GLOBALS--------------------------------------------//
 typedef struct{
@@ -50,18 +54,27 @@ typedef struct{
   uint8_t Vd;
 } robot_vel;
 
+//struct individuo
 typedef struct{
-  uint8_t v0;
-  float linear_kp;
-  float angular_kp;
-  uint8_t qtdQuadrantes;     //Soma 1 toda vez que avança quadrante (2 voltas), sub 1 toda vez que volta quadrante
-  uint8_t ultimoQuarante;    //
-  uint8_t maxQtdQuadrante;
+  
+  //Cromossomo
+  uint8_t v0;       //Velocidade
+  float linear_kp;  //Quao perto o individuo se mantem no centro da linha
+  float angular_kp; //Quao sensivel o individuo realiza as curvas
 
-  uint64_t tempoNoQuadrante; //Soma 
-  uint64_t framesPerdidos;   //Soma 1 toda vez que existe um frame sem linha, reseta quando encontra linha
+  //Check kill
+  uint8_t qtdQuadrantes;    //Soma 1 toda vez que avança quadrante (2 voltas), sub 1 toda vez que volta quadrante
+  uint8_t ultimoQuarante;   //Ultimo quadrante que o individuo estava (para comparacao)
+  uint8_t maxQtdQuadrante;  //Valor do maior quadrante que o individuo chegou
+  uint64_t tempoNoQuadrante;  //Soma frames no mesmo quadrante, reseta apenas qndo maxQtdQuadrante e' atualizado
+  uint64_t framesPerdidos;    //Soma 1 toda vez que existe um frame sem linha, reseta quando encontra linha
+  
+  //Calculo do fitness
+  uint64_t framesTotal;         //Soma total de frames (equiv ao tempoTotal)
+  uint64_t distanciaPercorrida; //Soma do calculo das pequenas distancias pto a pto 
+  uint64_t fitness; //Contem o fitness do individuo para ordenacao e escolher os individuos para reproducao
 
-} robot_consts;
+} robot_consts; 
 
 cv::Mat canny;
 cv::Mat raw_img;
@@ -72,6 +85,14 @@ ros::Publisher speed_pub;
 std_msgs::UInt8MultiArray msg;
 
 robot_pos robotPos;
+
+//Vetor de individuos (Populacao)
+robot_consts *indv[TAM_POPULATION];
+int pos_indv_atual;
+
+//Vetor dos melhores individuos sera utilizado para a reproducao (Best)
+robot_consts *best_ind[TAM_BEST];
+
 
 
 //-------------------------------------------FUNCTIONS--------------------------------------------//
@@ -103,8 +124,31 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg);
 //updates the current positon of the robot
 void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg);
 
+
+//AG
+//Inicia a populacao de individuos
 void initBestPopulation(robot_consts **indivBest);
+
+
+//Inicia randomicamente a populacao de melhores
 void initPopulation(robot_consts **indiv);
+
+
+//Verifica se individuo deve morrer
+bool check_kill_indiv(robot_consts *indiv);
+
+
+//Calcula o fitness do individuo
+void calc_fitness(robot_consts *indiv);
+
+
+//Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 4 indivios novos
+void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos);
+
+
+//retorna valor entre inicio_range e final_range com precisao de x casas 
+double randomize(int inicio_range, int final_range, int casas_precisao);
+
 
 robot_vel getMotorsVelocity(delta error, robot_consts consts){
   robot_vel result;
@@ -135,20 +179,12 @@ robot_vel getMotorsVelocity(delta error, robot_consts consts){
 //----------------------------------------------MAIN---------------------------------------------//
 int main(int argc, char **argv){
   ros::init(argc, argv, "main");
-
-  robot_consts *indv[TAM_POPULATION];
-  robot_consts *best_ind[TAM_BEST];
+  srand(time(0));
 
   initPopulation(indv);
   initBestPopulation(best_ind);
 
-  cout<< best_ind[0]->v0 << endl;;
-
-
-
-
   namedWindow("Probabilistic", WINDOW_AUTOSIZE); // Create Window
-
 
   ros::NodeHandle n;
   robotPos.x = 0;
@@ -165,7 +201,7 @@ int main(int argc, char **argv){
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
 
-  ROS_INFO("%d", best_ind[0]->v0);
+  ROS_INFO("%.3f", best_ind[0]->angular_kp);
   ros::spin();
   return 0;
 }
@@ -294,44 +330,82 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos.y = msg->data[1];
   robotPos.theta = msg->data[2];
 
-  //pega estacao
-  //ve se morreu
-  //se morreu, troca numero da estacao
-
-}
-
-
-//Inicio AG
-//Iniciando vetores de inidividuos(populacao) e de melhores(best)
-//returns -1 <= x <= 1
-double randomize(){
-  double randon = rand() % 2000;
-  return (randon/1000) - 1;
-}
-
-void initBestPopulation(robot_consts **indivBest){
-  srand(time(0));
-  for(int i = 0; i < TAM_BEST; i++){
-    indivBest[i] = (robot_consts*)malloc(sizeof(robot_consts));
-    indivBest[i]->v0 = (int) (((double)LIMIT_VALUE_V0) * randomize());
-    indivBest[i]->linear_kp = (float) LIMIT_VALUE_LINEAR_KP * randomize();
-    indivBest[i]->angular_kp = (float) LIMIT_VALUE_ANGULAR_KP * randomize();
-    ROS_INFO("%f", randomize());
+  uint8_t station = 1;//pega estacao do individuo
+  bool kill_indv = check_kill_indiv(indv[pos_indv_atual]); //ver se deve morrer
+  
+  if(kill_indv){
+    //reset_robot();
+    calc_fitness(indv[pos_indv_atual++]); // calcula o fitness do robo atual (que morreu)
+    
+    //se morreu, troca numero da estacao
+    if(pos_indv_atual < TAM_POPULATION){
+      //marcar pos_indv_atual na estacao
+      //iniciar indv[pos_indv_atual]
+    }else{
+      //marcar -1 na estacao
+    }
   }
 }
+
+
+double randomize(int inicio_range, int final_range, int casas_precisao){
+  int div_value = pow(10, casas_precisao) * final_range;
+  int total_ran = final_range - inicio_range;
+  double randon = rand() % (total_ran * div_value);
+  return (randon / div_value) + inicio_range;
+}
+
+
+void initBestPopulation(robot_consts **indivBest){
+  for(int i = 0; i < TAM_BEST; i++){
+    indivBest[i] = (robot_consts*)malloc(sizeof(robot_consts));
+    indivBest[i]->v0=(uint8_t)((float) MAX_VALUE_V0         * randomize(-1, 1, 3));
+    indivBest[i]->linear_kp  = (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
+    indivBest[i]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
+  }
+}
+
 
 void initPopulation(robot_consts **indiv){
   for(int i = 0; i < TAM_BEST; i++){
     indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
-    indiv[i]->v0 = (int) 0.0;
-    indiv[i]->linear_kp = 0.0;
+    indiv[i]->v0         = 0;
+    indiv[i]->linear_kp  = 0.0;
     indiv[i]->angular_kp = 0.0;
   }
 }
 
-void calc_fitness(){
+
+void calc_fitness(robot_consts *indiv){
+  //calc fitness do sublime - ver regra de fitness
+  indiv->fitness = 0;
 }
 
-void cross(){
+
+void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
+  int rand = randomize(1, 100, 0);  //ver mutacao
+  filhos[0]->v0         = pai->v0;
+  filhos[0]->linear_kp  = pai->linear_kp;
+  filhos[0]->angular_kp = mae->angular_kp;
+  
+  rand = randomize(1, 100, 0);      //ver mutacao
+  filhos[1]->v0         = pai->v0;
+  filhos[1]->linear_kp  = mae->linear_kp;
+  filhos[1]->angular_kp = mae->angular_kp;
+
+  rand = randomize(1, 100, 0);      //ver mutacao
+  filhos[2]->v0         = mae->v0;
+  filhos[2]->linear_kp  = pai->linear_kp;
+  filhos[2]->angular_kp = pai->angular_kp;
+
+  rand = randomize(1, 100, 0);      //ver mutacao
+  filhos[2]->v0         = mae->v0;
+  filhos[2]->linear_kp  = mae->linear_kp;
+  filhos[2]->angular_kp = pai->angular_kp;
 }
 
+
+bool check_kill_indiv(robot_consts *indiv){
+  //ind
+  return false;
+}
