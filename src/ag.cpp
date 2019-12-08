@@ -31,7 +31,7 @@ void initBestPopulation(robot_consts **indivBest){
 
 
 void initPopulation(robot_consts **indiv){
-  for(int i = 0; i < TAM_BEST; i++){
+  for(int i = 0; i < TAM_POPULATION; i++){
     indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
     indiv[i]->v0         = 0;
     indiv[i]->linear_kp  = 0.0;
@@ -41,35 +41,82 @@ void initPopulation(robot_consts **indiv){
 
 
 void calc_fitness(robot_consts *indiv){
-  //calc fitness do sublime - ver regra de fitness
-  indiv->fitness = 0;
+  float fitness = 0.0;
+  float PESO_QUADRANTE  = 0.5;
+  float PESO_DISTANCIA  = 0.3;
+  float PESO_TEMPO_VIVO = 0.2;
+
+  fitness += PESO_DISTANCIA  * indiv->distanciaPercorrida;
+  fitness += PESO_QUADRANTE  * indiv->maxQtdQuadrante;
+  fitness += PESO_TEMPO_VIVO * indiv->tempoTotal;
+  
+  indiv->fitness = fitness;
 }
 
 
 void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
-  int rand = randomize(1, 100, 0);  //ver mutacao
-  filhos[0]->v0         = pai->v0;
-  filhos[0]->linear_kp  = pai->linear_kp;
-  filhos[0]->angular_kp = mae->angular_kp;
+  int rand;
+  int mut_v0, mut_lin, mut_ang;
+
+  //2 pai x 1 mae
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 3)) : 0;
+  filhos[0]->v0         = pai->v0         + mut_v0;
+  filhos[0]->linear_kp  = pai->linear_kp  + mut_lin;
+  filhos[0]->angular_kp = mae->angular_kp + mut_ang;
   
-  rand = randomize(1, 100, 0);      //ver mutacao
-  filhos[1]->v0         = pai->v0;
-  filhos[1]->linear_kp  = mae->linear_kp;
-  filhos[1]->angular_kp = mae->angular_kp;
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 3)) : 0;
+  filhos[1]->v0         = pai->v0         + mut_v0;
+  filhos[1]->linear_kp  = mae->linear_kp  + mut_lin;
+  filhos[1]->angular_kp = pai->angular_kp + mut_ang;
 
-  rand = randomize(1, 100, 0);      //ver mutacao
-  filhos[2]->v0         = mae->v0;
-  filhos[2]->linear_kp  = pai->linear_kp;
-  filhos[2]->angular_kp = pai->angular_kp;
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 3)) : 0;
+  filhos[2]->v0         = mae->v0         + mut_v0;
+  filhos[2]->linear_kp  = pai->linear_kp  + mut_lin;
+  filhos[2]->angular_kp = pai->angular_kp + mut_ang;
+  
+  //1 pai x 2 mae
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 3)) : 0;
+  filhos[3]->v0         = mae->v0         + mut_v0;
+  filhos[3]->linear_kp  = mae->linear_kp  + mut_lin;
+  filhos[3]->angular_kp = pai->angular_kp + mut_ang;
 
-  rand = randomize(1, 100, 0);      //ver mutacao
-  filhos[3]->v0         = mae->v0;
-  filhos[3]->linear_kp  = mae->linear_kp;
-  filhos[3]->angular_kp = pai->angular_kp;
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 3)) : 0;
+  filhos[4]->v0         = mae->v0         + mut_v0;
+  filhos[4]->linear_kp  = pai->linear_kp  + mut_lin;
+  filhos[4]->angular_kp = mae->angular_kp + mut_ang;
+
+  rand = randomize(1, 100, 0);  //Chance de mutacao
+  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 3)) : 0;
+  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 3)) : 0;
+  filhos[5]->v0         = pai->v0         + mut_v0;
+  filhos[5]->linear_kp  = mae->linear_kp  + mut_lin;
+  filhos[5]->angular_kp = mae->angular_kp + mut_ang;
+
 }
 
 
 bool check_kill_indiv(robot_consts *indiv){
   //ind
   return false;
+}
+
+
+void atualizar_dist(robot_consts *indiv){
+
 }

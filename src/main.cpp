@@ -20,66 +20,6 @@
 using namespace std;
 using namespace cv;
 
-//--------------------------------------------DEFINES--------------------------------------------//
-#define HoughLineTH 40
-#define ERROR -1000
-
-#define MAX_SPEED 40
-
-#define QUADRANT_1 1
-#define QUADRANT_2 2
-#define QUADRANT_3 3
-#define QUADRANT_4 4
-
-#define TAM_POPULATION 48 //36 filhos + 12 best(nao eh necessario rodar dnovo os 12 best pois ja posuem fitness)
-#define TAM_BEST 12
-#define CHANCE_MUTACAO 5
-
-#define MAX_VALUE_V0 250
-#define MAX_VALUE_LINEAR_KP 10
-#define MAX_VALUE_ANGULAR_KP 220
-
-#define LIMIT_FRAMES_POR_QUADRANTE 0
-#define LIMIT_FRAMES_SEM_LINHA 0
-
-//--------------------------------------------GLOBALS--------------------------------------------//
-typedef struct{
-  float shift;
-  float angle;
-} delta;
-
-typedef struct{
-  float x;
-  float y;
-  float theta;
-} robot_pos;
-
-typedef struct{
-  int16_t Ve;
-  uint8_t Vd;
-} robot_vel;
-
-//struct individuo
-typedef struct{
-  
-  //Cromossomo
-  uint8_t v0;       //Velocidade
-  float linear_kp;  //Quao perto o individuo se mantem no centro da linha
-  float angular_kp; //Quao sensivel o individuo realiza as curvas
-
-  //Check kill
-  uint8_t qtdQuadrantes;    //Soma 1 toda vez que avança quadrante (2 voltas), sub 1 toda vez que volta quadrante
-  uint8_t ultimoQuarante;   //Ultimo quadrante que o individuo estava (para comparacao)
-  uint8_t maxQtdQuadrante;  //Valor do maior quadrante que o individuo chegou
-  uint64_t tempoNoQuadrante;  //Soma frames no mesmo quadrante, reseta apenas qndo maxQtdQuadrante e' atualizado
-  uint64_t framesPerdidos;    //Soma 1 toda vez que existe um frame sem linha, reseta quando encontra linha
-  
-  //Calculo do fitness
-  uint64_t framesTotal;         //Soma total de frames (equiv ao tempoTotal)
-  uint64_t distanciaPercorrida; //Soma do calculo das pequenas distancias pto a pto 
-  uint64_t fitness; //Contem o fitness do individuo para ordenacao e escolher os individuos para reproducao
-
-} robot_consts; 
 
 //-------------------------------------------GLOBALS--------------------------------------------//
 cv::Mat canny;
@@ -102,67 +42,14 @@ int pos_indv_atual;
 //Vetor dos melhores individuos sera utilizado para a reproducao (Best)
 robot_consts *indivBest[TAM_BEST];
 
-
-//-------------------------------------------FUNCTIONS--------------------------------------------//
+//------------------------------------------------------FUNCTIONS------------------------------------------------------//
 
 //callback from robot_pos topic
 //updates the current positon of the robot
 void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg);
 
 
-//AG
-//Inicia a populacao de individuos
-void initBestPopulation(robot_consts **indivBest);
-
-
-//Inicia randomicamente a populacao de melhores
-void initPopulation(robot_consts **indiv);
-
-
-//Verifica se individuo deve morrer
-bool check_kill_indiv(robot_consts *indiv);
-
-
-//Calcula o fitness do individuo
-void calc_fitness(robot_consts *indiv);
-
-
-//Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 6 individuos novos
-void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos);
-
-
-//retorna valor entre inicio_range e final_range com precisao de x casas 
-double randomize(float inicio_range, float final_range, int casas_precisao);
-
-
-robot_vel getMotorsVelocity(delta error, robot_consts consts){
-  robot_vel result;
-  float errorSum = consts.linear_kp * error.shift  +  consts.angular_kp * error.angle;
-
-  float Ve = consts.v0 + errorSum;
-  float Vd = consts.v0 - errorSum;
-
-  if(Ve > MAX_SPEED)
-    Ve = MAX_SPEED;
-  else if(Ve < -MAX_SPEED)
-    Ve = -MAX_SPEED;
-
-  if(Vd > MAX_SPEED)
-    Vd = MAX_SPEED;
-  else if(Vd < -MAX_SPEED)
-    Vd = -MAX_SPEED;
-
-  cout << "Ve: " << Ve << ",  Vd: " << Vd << ",  linear: " << consts.linear_kp * error.shift << ",  angular" << consts.angular_kp * error.angle << endl;
-
-  result.Ve = Ve;
-  result.Vd = Vd;
-  result.Ve = 0;
-  result.Vd = 0;
-  return result;
-}
-
-
-//-------------------------------------------------------MAIN--------------------------------------------------------//
+//--------------------------------------------------------MAIN--------------------------------------------------------//
 int main(int argc, char **argv){
   int i = 0;
   ros::init(argc, argv, "main");
@@ -171,21 +58,21 @@ int main(int argc, char **argv){
   initPopulation(indiv);
   initBestPopulation(indivBest);
   
-  ROS_INFO("INICIAR INDIVIDUOS\n");
+  ROS_INFO("Iniciar Individuos Geracao\n");
 
-  robot_consts **vet;
+  robot_consts **vet_aux;
   for(int j = 0; j < 6; j++){
-    vet = (robot_consts**) malloc(6 * sizeof(robot_consts*));
-    vet[0] = indiv[6*j];
-    vet[1] = indiv[(6*j)+1];
-    vet[2] = indiv[(6*j)+2];
-    vet[3] = indiv[(6*j)+3];
-    vet[4] = indiv[(6*j)+4];
-    vet[5] = indiv[(6*j)+5];
+    vet_aux = (robot_consts**) malloc(6 * sizeof(robot_consts*));
+    vet_aux[0] = indiv[6*j];
+    vet_aux[1] = indiv[(6*j)+1];
+    vet_aux[2] = indiv[(6*j)+2];
+    vet_aux[3] = indiv[(6*j)+3];
+    vet_aux[4] = indiv[(6*j)+4];
+    vet_aux[5] = indiv[(6*j)+5];
     indiv[36 + (2*j)] = indivBest[2*j];
     indiv[37 + (2*j)] = indivBest[(2*j)+1];
-    cross(indivBest[2*j], indivBest[(2*j)+1], vet);
-    free(vet);
+    cross(indivBest[2*j], indivBest[(2*j)+1], vet_aux);
+    free(vet_aux);
   }
 
   for(int i = 0; i < TAM_POPULATION; i++){
@@ -232,14 +119,12 @@ int main(int argc, char **argv){
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
 
-  //ROS_INFO("%.3f", indivBest[0]->angular_kp);
   ros::spin();
   return 0;
 }
 
 
-//-------------------------------------------------------FUNCTIONS-------------------------------------------------------//
-
+//------------------------------------------------------FUNCTIONS------------------------------------------------------//
 
 //callback from robot_pos topic
 //updates the current positon of the robot
@@ -277,109 +162,4 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
       //marcar -1 na estacao
     }
   }
-}
-
-
-double randomize(float inicio_range, float final_range, int casas_precisao){
-  int div_value = final_range * pow(10, casas_precisao);
-  int tot_range = final_range - inicio_range;
-
-  double randon = rand() % (tot_range * div_value);
-  
-  return (randon / div_value) + inicio_range;
-}
-
-
-void initBestPopulation(robot_consts **indivBest){
-  for(int i = 0; i < TAM_BEST; i++){
-    indivBest[i] = (robot_consts*)malloc(sizeof(robot_consts));
-    indivBest[i]->v0=(uint8_t)((float) MAX_VALUE_V0         * randomize(-1, 1, 3));
-    indivBest[i]->linear_kp  = (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
-    indivBest[i]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
-    indivBest[i]->fitness    = -1;
-  }
-}
-
-
-void initPopulation(robot_consts **indiv){
-  for(int i = 0; i < TAM_POPULATION; i++){
-    indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
-    indiv[i]->v0         = 0;
-    indiv[i]->linear_kp  = 0.0;
-    indiv[i]->angular_kp = 0.0;
-    indiv[i]->fitness    = -1;
-  }
-}
-
-
-void calc_fitness(robot_consts *indiv){
-  //calc fitness do sublime - ver regra de fitness
-  indiv->fitness = 0;
-}
-
-
-void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
-  int rand;
-  int mut_v0, mut_lin, mut_ang;
-
-  //2 pai x 1 mae
-  rand = randomize(1, 100, 0);  //Chance de mutacao
-  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
-  filhos[0]->v0         = pai->v0         + mut_v0;
-  filhos[0]->linear_kp  = pai->linear_kp  + mut_lin;
-  filhos[0]->angular_kp = mae->angular_kp + mut_ang;
-  
-  rand = randomize(1, 100, 0);  //Chance de mutacao
-  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
-  filhos[1]->v0         = pai->v0         + mut_v0;
-  filhos[1]->linear_kp  = mae->linear_kp  + mut_lin;
-  filhos[1]->angular_kp = pai->angular_kp + mut_ang;
-
-  rand = randomize(1, 100, 0);  //Chance de mutacao
-  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
-  filhos[2]->v0         = mae->v0         + mut_v0;
-  filhos[2]->linear_kp  = pai->linear_kp  + mut_lin;
-  filhos[2]->angular_kp = pai->angular_kp + mut_ang;
-  
-  //1 pai x 2 mae
-  rand = randomize(1, 100, 0);  //Chance de mutacao
-  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
-  filhos[3]->v0         = mae->v0         + mut_v0;
-  filhos[3]->linear_kp  = mae->linear_kp  + mut_lin;
-  filhos[3]->angular_kp = pai->angular_kp + mut_ang;
-
-  rand = randomize(1, 100, 0);  //Chance de mutacao
-  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
-  filhos[4]->v0         = mae->v0         + mut_v0;
-  filhos[4]->linear_kp  = pai->linear_kp  + mut_lin;
-  filhos[4]->angular_kp = mae->angular_kp + mut_ang;
-
-  rand = randomize(1, 100, 0);  //Chance de mutacao
-  mut_v0  = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_V0, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_LINEAR_KP, 0)) : 0;
-  mut_lin = (rand <= CHANCE_MUTACAO) ? (randomize(0, 0.1*MAX_VALUE_ANGULAR_KP, 0)) : 0;
-  filhos[5]->v0         = pai->v0         + mut_v0;
-  filhos[5]->linear_kp  = mae->linear_kp  + mut_lin;
-  filhos[5]->angular_kp = mae->angular_kp + mut_ang;
-
-}
-
-
-bool check_kill_indiv(robot_consts *indiv){
-  
-  if(indiv->framesPerdidos >= LIMIT_FRAMES_SEM_LINHA || indiv->tempoNoQuadrante >= LIMIT_FRAMES_POR_QUADRANTE){
-       return true;
-  }
-
-  return false;
 }

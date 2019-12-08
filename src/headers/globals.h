@@ -18,6 +18,8 @@
 using namespace std;
 using namespace cv;
 
+//--------------------------------------------DEFINES--------------------------------------------//
+
 #define HoughLineTH 40
 #define ERROR -1000
 
@@ -68,7 +70,7 @@ typedef struct{
   uint64_t framesPerdidos;    //Soma 1 toda vez que existe um frame sem linha, reseta quando encontra linha
   
   //Calculo do fitness
-  uint64_t framesTotal;         //Soma total de frames (equiv ao tempoTotal)
+  uint64_t tempoTotal;          //Soma total de frames (equiv ao tempoTotal)
   uint64_t distanciaPercorrida; //Soma do calculo das pequenas distancias pto a pto 
   uint64_t fitness; //Contem o fitness do individuo para ordenacao e escolher os individuos para reproducao
 
