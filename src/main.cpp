@@ -57,22 +57,17 @@ int main(int argc, char **argv){
   srand(time(0));
   initPopulation(indiv);
   initBestPopulation(indivBest);
-  
+  pos_indv_atual = 0;
   ROS_INFO("Iniciar Individuos Geracao\n");
 
-  robot_consts **vet_aux;
+  robot_consts *vet_aux[6];
   for(int j = 0; j < 6; j++){
-    vet_aux = (robot_consts**) malloc(6 * sizeof(robot_consts*));
-    vet_aux[0] = indiv[6*j];
-    vet_aux[1] = indiv[(6*j)+1];
-    vet_aux[2] = indiv[(6*j)+2];
-    vet_aux[3] = indiv[(6*j)+3];
-    vet_aux[4] = indiv[(6*j)+4];
-    vet_aux[5] = indiv[(6*j)+5];
+    for(int k = 0; k < 6; k++){
+      vet_aux[k] = indiv[(6*j)+k];
+    }
     indiv[36 + (2*j)] = indivBest[2*j];
     indiv[37 + (2*j)] = indivBest[(2*j)+1];
     cross(indivBest[2*j], indivBest[(2*j)+1], vet_aux);
-    free(vet_aux);
   }
 
   for(int i = 0; i < TAM_POPULATION; i++){
@@ -88,8 +83,16 @@ int main(int argc, char **argv){
 
   pos_indv_atual = 1;
   for(i = 0; i < TAM_ESTACOES; i++){
+<<<<<<< HEAD
+    estacao2robot[i] = pos_indv_atual;
+/* 
+    teste = getMotorsVelocity(delta, indiv[pos_indv_atual]);
+    sendSpeed(teste, pos_indv_atual);
+*/
+=======
     estacao2robot[i] = i;
     pos_indv_atual++;
+>>>>>>> f27f4787400c22db61cb832a99044723eb56828e
   }
 
   ros::NodeHandle n;
