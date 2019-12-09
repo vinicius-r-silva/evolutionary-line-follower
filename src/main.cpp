@@ -83,16 +83,8 @@ int main(int argc, char **argv){
 
   pos_indv_atual = 1;
   for(i = 0; i < TAM_ESTACOES; i++){
-<<<<<<< HEAD
-    estacao2robot[i] = pos_indv_atual;
-/* 
-    teste = getMotorsVelocity(delta, indiv[pos_indv_atual]);
-    sendSpeed(teste, pos_indv_atual);
-*/
-=======
     estacao2robot[i] = i;
     pos_indv_atual++;
->>>>>>> f27f4787400c22db61cb832a99044723eb56828e
   }
 
   ros::NodeHandle n;
