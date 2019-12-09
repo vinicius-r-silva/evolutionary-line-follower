@@ -8,11 +8,11 @@
 #define TX_FPS 30
 
 //Inicia a populacao de individuos
-void initBestPopulation(robot_consts **indivBest);
+void initBestPopulation();
 
 
 //Inicia randomicamente a populacao de melhores
-void initPopulation(robot_consts **indiv);
+void initPopulation();
 
 
 //Verifica se individuo deve morrer
@@ -34,5 +34,7 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos);
 //retorna valor entre inicio_range e final_range com precisao de x casas 
 double randomize(int inicio_range, int final_range, int casas_precisao);
 
+//check if generation was come to a end
+bool isGenerationEnded();
 
 #endif
