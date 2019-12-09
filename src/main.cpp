@@ -36,11 +36,11 @@ robot_pos *robotPos[TAM_POPULATION];
 int estacao2robot[TAM_ESTACOES];
 
 //Vetor de individuos (Populacao)
-robot_consts *indiv[TAM_POPULATION];
+vector<robot_consts*> indiv(TAM_POPULATION);
 int pos_indv_atual;
 
 //Vetor dos melhores individuos sera utilizado para a reproducao (Best)
-robot_consts *indivBest[TAM_BEST];
+//vector<robot_consts*> indivBest(TAM_BEST);
 
 //------------------------------------------------------FUNCTIONS------------------------------------------------------//
 
@@ -55,24 +55,23 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "main");
 
   srand(time(0));
-  initPopulation(indiv);
-  initBestPopulation(indivBest);
+  initPopulation();
   pos_indv_atual = 0;
   ROS_INFO("Iniciar Individuos Geracao\n");
 
-  robot_consts *vet_aux[6];
-  for(int j = 0; j < 6; j++){
-    for(int k = 0; k < 6; k++){
-      vet_aux[k] = indiv[(6*j)+k];
-    }
-    indiv[36 + (2*j)] = indivBest[2*j];
-    indiv[37 + (2*j)] = indivBest[(2*j)+1];
-    cross(indivBest[2*j], indivBest[(2*j)+1], vet_aux);
-  }
+  // robot_consts *vet_aux[6];
+  // for(int j = 0; j < 6; j++){
+  //   for(int k = 0; k < 6; k++){
+  //     vet_aux[k] = indiv[(6*j)+k];
+  //   }
+  //   indiv[36 + (2*j)] = indivBest[2*j];
+  //   indiv[37 + (2*j)] = indivBest[(2*j)+1];
+  //   cross(indivBest[2*j], indivBest[(2*j)+1], vet_aux);
+  // }
 
-  for(int i = 0; i < TAM_POPULATION; i++){
-    ROS_INFO("INDIV[%d]: %d | %.2f | %.2f\n",i, indiv[i]->v0, indiv[i]->linear_kp, indiv[i]->angular_kp);    
-  }
+  // for(int i = 0; i < TAM_POPULATION; i++){
+  //   ROS_INFO("INDIV[%d]: %d | %.2f | %.2f\n",i, indiv[i]->v0, indiv[i]->linear_kp, indiv[i]->angular_kp);    
+  // }
 
   char windowName[] = "estacaoX";
   for(i = 0; i < TAM_ESTACOES; i++){
@@ -121,18 +120,20 @@ int main(int argc, char **argv){
 }
 
 
+bool compareFitness(robot_consts* robot1, robot_consts* robot2){
+  return robot1->fitness < robot2->fitness;
+}
+
 //------------------------------------------------------FUNCTIONS------------------------------------------------------//
 
 //callback from robot_pos topic
 //updates the current positon of the robot
 void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
+  int i = 0;
   int estacao = msg->data[0]; //pega estacao do individuo
   int robot = estacao2robot[estacao];
 
   if(robot == -1)
-    return;
-
-  if(estacao != 0)
     return;
 
   int quadrante = msg->data[1];
@@ -141,10 +142,6 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos[robot]->y = msg->data[3];
   robotPos[robot]->theta = msg->data[4];
   robotPos[robot]->quadrante = quadrante;
-
-
-  // sendSpeed()
-  reset_robot(0);
   
   if(check_kill_indiv(robot)){
     reset_robot(estacao);
@@ -161,6 +158,39 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
       pos_indv_atual++;
     }else{
       estacao2robot[estacao] = -1;
+    }
+
+    if(isGenerationEnded()){
+      std::sort(indiv.begin(), indiv.end(), compareFitness);
+
+      robot_consts *vet_aux[2];
+      int pai_index = rand() % TAM_BEST;
+      int mae_index = rand() % TAM_BEST;
+      while(mae_index == pai_index){
+        mae_index = rand() % TAM_BEST;
+      }
+      
+      for(int j = 0; j < 18; j++){
+        for(int k = 0; k < 2; k++){
+          vet_aux[k] = indiv[TAM_BEST + (3*j)+k];
+        }
+
+        pai_index = rand() % TAM_BEST;
+        mae_index = rand() % TAM_BEST;
+        while(mae_index == pai_index){
+          mae_index = rand() % TAM_BEST;
+        }
+        
+        // indiv[36 + (2*j)] = indivBest[2*j];
+        // indiv[37 + (2*j)] = indivBest[(2*j)+1];
+        cross(indiv[pai_index], indiv[mae_index], vet_aux);
+      }
+
+      pos_indv_atual = TAM_BEST;
+      for(i = 0; i < TAM_ESTACOES; i++){
+        estacao2robot[i] = pos_indv_atual;
+        pos_indv_atual++;
+      }
     }
   }
 }

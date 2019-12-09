@@ -20,8 +20,6 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
         sendSpeed(robotVel, estacao);
         return;
     }
-    if(estacao == 0)
-      return;
 
     char robotName[] = "robot X";
     robotName[6] = robot + '0';
