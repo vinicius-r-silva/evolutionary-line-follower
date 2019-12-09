@@ -21,12 +21,6 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
         return;
     }
 
-    char robotName[] = "robot X";
-    robotName[6] = robot + '0';
-
-    char windowName[] = "estacaoX";
-    windowName[7] = estacao + '0';
-
     robot_consts consts = *(indiv[robot]);
     delta     robot_error;
 
@@ -56,21 +50,33 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     }
     (indiv[robot]->tempoTotal)++;
 
+
+    char windowName[15] = "estacaoX";
+    windowName[7] = estacao + '0';
+
     char sv0[15];
     char sang[15];
     char slin[15];
     char ve[15];
     char vd[15];
+    char robotName[15];
+    char timeQuad[25];
+    char LostFrames[25];
     sprintf (sv0, "v0 : %d", consts.v0);
     sprintf (sang, "ang: %.3f", consts.angular_kp);
     sprintf (slin, "lin: %.3f", consts.linear_kp);
     sprintf (ve, "ve: %d", robotVel.Ve);
     sprintf (vd, "vd: %d", robotVel.Vd);
+    sprintf (robotName, "robot: %d", robot);
+    sprintf (timeQuad, "QuadT: %ld", indiv[robot]->tempoNoQuadrante);
+    sprintf (LostFrames, "Lost: %ld", indiv[robot]->framesPerdidos);
     putText(HLines_img, sv0, Point(0,27), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, sang, Point(0,40), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, slin, Point(0,55), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, ve, Point(0,70), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, vd, Point(0,85), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
+    putText(HLines_img, timeQuad, Point(0,97), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
+    putText(HLines_img, LostFrames, Point(0,110), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, robotName, Point(0,15), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     imshow(windowName, HLines_img);       //shows the image with the choosen line printed on it
     waitKey(1);
