@@ -32,7 +32,7 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos);
 
 
 //retorna valor entre inicio_range e final_range com precisao de x casas 
-double randomize(int inicio_range, int final_range, int casas_precisao);
+double randomize(double inicio_range, double final_range, int casas_precisao);
 
 //check if generation was come to a end
 bool isGenerationEnded();

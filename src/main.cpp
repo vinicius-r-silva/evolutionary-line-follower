@@ -135,6 +135,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos[robot]->y = posY;
   robotPos[robot]->theta = msg->data[4];
   indiv[robot]->tempoNoQuadrante++;
+  indiv[robot]->tempoTotal++;
   
   if(robotPos[robot]->quadrante < quadrante || (robotPos[robot]->quadrante == 4 && quadrante == 1)){
     robotPos[robot]->quadrante = quadrante;
@@ -145,7 +146,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   if(check_kill_indiv(robot)){
 
     calc_fitness(robot);
-    ROS_INFO("FIT Robot[%d] = %f\n", robot, indiv[robot]->fitness);
+    ROS_INFO("State: %d Robot[%d] Dist:%ld Tempo:%ld Fit:%.4f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->tempoTotal, indiv[robot]->fitness);
 
     //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
@@ -159,29 +160,21 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
     if(isGenerationEnded()){
       std::sort(indiv.begin(), indiv.end(), compareFitness);
-
-      ROS_INFO("APOS O SORT");
-
       int qtd_pais = (TAM_POPULATION - TAM_BEST) / RAZAO_PAIS_FILHOS;
 
       robot_consts *vet_aux[RAZAO_PAIS_FILHOS];
-      int pai_index = rand() % TAM_BEST;
-      int mae_index = rand() % TAM_BEST;
-      while(mae_index == pai_index){
-        mae_index = rand() % TAM_BEST;
-      }
+      int pai_index;
+      int mae_index;
       
       for(int j = 0; j < qtd_pais; j++){
         for(int k = 0; k < RAZAO_PAIS_FILHOS; k++){
           vet_aux[k] = indiv[TAM_BEST + (RAZAO_PAIS_FILHOS*j)+k];
         }
-
         pai_index = rand() % TAM_BEST;
         mae_index = rand() % TAM_BEST;
         while(mae_index == pai_index){
           mae_index = rand() % TAM_BEST;
         }
-
         cross(indiv[pai_index], indiv[mae_index], vet_aux);
       }
 

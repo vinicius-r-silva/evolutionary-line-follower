@@ -12,10 +12,10 @@ extern int pos_indv_atual;
 extern robot_consts *indivBest[TAM_BEST];
 
 
-double randomize(int inicio_range, int final_range, int casas_precisao){
-  int div_value = pow(10, casas_precisao) * final_range;
-  int total_ran = final_range - inicio_range;
-  double randon = rand() % (total_ran * div_value);
+double randomize(double inicio_range, double final_range, int casas_precisao){
+  double div_value = pow(10, casas_precisao) * final_range;
+  double total_ran = final_range - inicio_range;
+  double randon = rand() % (int)(total_ran * div_value);
   return (randon / div_value) + inicio_range;
 }
 
@@ -34,7 +34,7 @@ void initPopulation(){
 
 void calc_fitness(int robot){
   float fitness = 0.0;
-  fitness += PESO_DISTANCIA * indiv[robot]->distanciaPercorrida;
+  fitness = PESO_DISTANCIA * indiv[robot]->distanciaPercorrida;
   fitness += PESO_TEMPO_VIVO * (indiv[robot]->tempoTotal / TX_FPS);
   indiv[robot]->fitness = fitness;
 }
@@ -47,7 +47,7 @@ void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
   mut_lin = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
 
   int parentSum = 0;
-  int parentChoice = randomize(-10, 10, 0);
+  int parentChoice = (int) randomize(-10, 10, 0);
   if(parentChoice < 0){
     filho->v0 = pai->v0 + mut_v0;
     parentSum++;
@@ -56,7 +56,7 @@ void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
     parentSum--;
   }
 
-  parentChoice = randomize(-10, 10, 0);
+  parentChoice = (int) randomize(-10, 10, 0);
   if(parentChoice < 0){
     filho->angular_kp = pai->angular_kp + mut_ang;
     parentSum++;
@@ -70,7 +70,7 @@ void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
   else if(parentSum == -2)
     parentChoice = 10;
   else
-    parentChoice = randomize(-10, 10, 0);
+    parentChoice = (int) randomize(-10, 10, 0);
     
   if(parentChoice < 0){
     filho->angular_kp = pai->angular_kp + mut_ang;
