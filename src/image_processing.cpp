@@ -55,6 +55,7 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     else{
       (indiv[robot]->framesPerdidos)++;
     }
+    (indiv[robot]->tempoTotal)++;
 
     char sv0[15];
     char sang[15];

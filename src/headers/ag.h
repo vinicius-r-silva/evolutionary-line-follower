@@ -3,6 +3,10 @@
 
 #include "globals.h"
 
+#define PESO_DISTANCIA  0.8
+#define PESO_TEMPO_VIVO 0.2
+#define TX_FPS 30
+
 //Inicia a populacao de individuos
 void initBestPopulation(robot_consts **indivBest);
 
@@ -16,11 +20,11 @@ bool check_kill_indiv(int robot);
 
 
 //Calcula o fitness do individuo - Media Ponderada
-void calc_fitness(robot_consts *indiv);
+void calc_fitness(int robot);
 
 
 //Atualiza a distancia percorrida
-void atualizar_dist(robot_consts *indiv);
+void atualizar_dist(int robot, float posX, float posY, float newPosX, float newPosY);
 
 
 //Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 6 indivios novos

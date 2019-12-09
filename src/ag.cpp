@@ -40,17 +40,11 @@ void initPopulation(robot_consts **indiv){
 }
 
 
-void calc_fitness(robot_consts *indiv){
+void calc_fitness(int robot){
   float fitness = 0.0;
-  float PESO_QUADRANTE  = 0.5;
-  float PESO_DISTANCIA  = 0.3;
-  float PESO_TEMPO_VIVO = 0.2;
-
-  fitness += PESO_DISTANCIA  * indiv->distanciaPercorrida;
-  fitness += PESO_QUADRANTE  * indiv->maxQtdQuadrante;
-  fitness += PESO_TEMPO_VIVO * indiv->tempoTotal;
-  
-  indiv->fitness = fitness;
+  fitness += PESO_DISTANCIA * indiv[robot]->distanciaPercorrida;
+  fitness += PESO_TEMPO_VIVO * (indiv[robot]->tempoTotal / TX_FPS);
+  indiv[robot]->fitness = fitness;
 }
 
 
@@ -112,11 +106,16 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
 
 
 bool check_kill_indiv(int robot){
-  //ind
+  if(indiv[robot]->tempoTotal > MAX_FRAMES_POR_QUADRANTE || indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA){
+    return true;
+  }
   return false;
 }
 
 
-void atualizar_dist(robot_consts *indiv){
-  
+void atualizar_dist(int robot, float posX, float posY, float newPosX, float newPosY){
+  float dx = posX - newPosX;
+  float dy = posY - newPosY;
+  indiv[robot]->distanciaPercorrida += pow(dx, 2);
+  indiv[robot]->distanciaPercorrida += pow(dy, 2);
 }

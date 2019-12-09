@@ -83,16 +83,8 @@ int main(int argc, char **argv){
 
   pos_indv_atual = 1;
   for(i = 0; i < TAM_ESTACOES; i++){
-<<<<<<< HEAD
-    estacao2robot[i] = pos_indv_atual;
-/* 
-    teste = getMotorsVelocity(delta, indiv[pos_indv_atual]);
-    sendSpeed(teste, pos_indv_atual);
-*/
-=======
     estacao2robot[i] = i;
     pos_indv_atual++;
->>>>>>> f27f4787400c22db61cb832a99044723eb56828e
   }
 
   ros::NodeHandle n;
@@ -145,23 +137,29 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
   int quadrante = msg->data[1];
 
-  robotPos[robot]->x = msg->data[2];
-  robotPos[robot]->y = msg->data[3];
+  float posX = msg->data[2];
+  float posY = msg->data[3];
+
+  atualizar_dist(robot, robotPos[robot]->x, robotPos[robot]->y , posX, posY);
+
+  robotPos[robot]->x = posX;
+  robotPos[robot]->y = posY;
   robotPos[robot]->theta = msg->data[4];
-  robotPos[robot]->quadrante = quadrante;
 
+  if(robotPos[robot]->quadrante < quadrante || (robotPos[robot]->quadrante == 4 && quadrante == 1)){
+    robotPos[robot]->quadrante = quadrante;
+    indiv[robot]->maxQtdQuadrante = quadrante;
+    indiv[robot]->tempoTotal = 0;
+  }
 
-  // sendSpeed()
-  reset_robot(0);
-  
   if(check_kill_indiv(robot)){
     reset_robot(estacao);
-    calc_fitness(indiv[pos_indv_atual]); // calcula o fitness do robo atual (que morreu)
+    calc_fitness(robot); // calcula o fitness do robo atual (que morreu)
     
     //calcular somente os que ainda nao possuem fitness
-    // while(pos_indv_atual < TAM_POPULATION && indiv[pos_indv_atual]->fitness != -1){
-    //   pos_indv_atual++;
-    // }
+    while(pos_indv_atual < TAM_POPULATION && indiv[pos_indv_atual]->fitness != -1){
+      pos_indv_atual++;
+    }
 
     //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
