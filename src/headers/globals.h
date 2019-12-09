@@ -27,7 +27,8 @@ using namespace cv;
 
 #define TAM_ESTACOES 6
 
-#define TAM_POPULATION 36
+//36 filhos + 12 best, os best nao rodar novamente, pois ja possuem fitness
+#define TAM_POPULATION 48
 #define TAM_BEST 12
 #define CHANCE_MUTACAO 4
 

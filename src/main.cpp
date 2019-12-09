@@ -57,22 +57,17 @@ int main(int argc, char **argv){
   srand(time(0));
   initPopulation(indiv);
   initBestPopulation(indivBest);
-  
+  pos_indv_atual = 0;
   ROS_INFO("Iniciar Individuos Geracao\n");
 
-  robot_consts **vet_aux;
+  robot_consts *vet_aux[6];
   for(int j = 0; j < 6; j++){
-    vet_aux = (robot_consts**) malloc(6 * sizeof(robot_consts*));
-    vet_aux[0] = indiv[6*j];
-    vet_aux[1] = indiv[(6*j)+1];
-    vet_aux[2] = indiv[(6*j)+2];
-    vet_aux[3] = indiv[(6*j)+3];
-    vet_aux[4] = indiv[(6*j)+4];
-    vet_aux[5] = indiv[(6*j)+5];
+    for(int k = 0; k < 6; k++){
+      vet_aux[k] = indiv[(6*j)+k];
+    }
     indiv[36 + (2*j)] = indivBest[2*j];
     indiv[37 + (2*j)] = indivBest[(2*j)+1];
     cross(indivBest[2*j], indivBest[(2*j)+1], vet_aux);
-    free(vet_aux);
   }
 
   for(int i = 0; i < TAM_POPULATION; i++){
@@ -87,7 +82,11 @@ int main(int argc, char **argv){
   }
 
   for(i = 0; i < TAM_ESTACOES; i++){
-    estacao2robot[i] = i;
+    estacao2robot[i] = pos_indv_atual;
+/* 
+    teste = getMotorsVelocity(delta, indiv[pos_indv_atual]);
+    sendSpeed(teste, pos_indv_atual);
+*/
   }
 
   ros::NodeHandle n;
@@ -143,11 +142,12 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos[robot]->x = msg->data[2];
   robotPos[robot]->y = msg->data[3];
   robotPos[robot]->theta = msg->data[4];
-  bool kill_indv = check_kill_indiv(indiv[pos_indv_atual]); //ver se deve morrer
+
+  bool kill_indv = check_kill_indiv(indiv[robot]); //ver se deve morrer
   
   if(kill_indv){
     //reset_robot();
-    calc_fitness(indiv[pos_indv_atual]); // calcula o fitness do robo atual (que morreu)
+    calc_fitness(indiv[robot]); // calcula o fitness do robo atual (que morreu)
     
     //calcular somente os que ainda nao possuem fitness
     while(pos_indv_atual < TAM_POPULATION && indiv[pos_indv_atual]->fitness != -1){
@@ -157,9 +157,11 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
     //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
       //marcar pos_indv_atual na estacao
+      estacao2robot[estacao] = pos_indv_atual;
       //iniciar indv[pos_indv_atual]
     }else{
       //marcar -1 na estacao
+      estacao2robot[estacao] = -1;
     }
   }
 }
