@@ -135,6 +135,11 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   int estacao = msg->data[0]; //pega estacao do individuo
   int robot = estacao2robot[estacao];
 
+    ROS_INFO("STATION [%f], %d\n", msg->data[0], estacao);
+
+  if(estacao > 1)
+    ROS_INFO("FIX STATION [%d]\n", estacao);
+
   if(robot == -1)
     return;
 
@@ -149,15 +154,15 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos[robot]->x = posX;
   robotPos[robot]->y = posY;
   robotPos[robot]->theta = msg->data[4];
-
+  indiv[robot]->tempoNoQuadrante++;
+  
   if(robotPos[robot]->quadrante < quadrante || (robotPos[robot]->quadrante == 4 && quadrante == 1)){
     robotPos[robot]->quadrante = quadrante;
     indiv[robot]->maxQtdQuadrante = quadrante;
-    indiv[robot]->tempoTotal = 0;
+    indiv[robot]->tempoNoQuadrante = 0;
   }
 
   if(check_kill_indiv(robot)){
-    ROS_INFO("KILL ROBOT[%d]\n", robot);
 
     calc_fitness(robot); // calcula o fitness do robo atual (que morreu)
 
