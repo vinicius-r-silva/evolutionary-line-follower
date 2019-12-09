@@ -37,4 +37,7 @@ double randomize(int inicio_range, int final_range, int casas_precisao);
 //check if generation was come to a end
 bool isGenerationEnded();
 
+//Reset values default
+void reset_contadores(robot_consts *ind_robot);
+
 #endif

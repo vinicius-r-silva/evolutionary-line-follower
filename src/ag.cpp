@@ -27,13 +27,7 @@ void initPopulation(){
     indiv[i]->linear_kp  = (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
     indiv[i]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
     indiv[i]->distanciaPercorrida = 0;
-    indiv[i]->framesPerdidos   = 0;
-    indiv[i]->maxQtdQuadrante  = 0;
-    indiv[i]->qtdQuadrantes    = 0;
-    indiv[i]->tempoNoQuadrante = 0;
-    indiv[i]->tempoTotal       = 0;
-    indiv[i]->ultimoQuarante   = 0;
-    indiv[i]->fitness          = -1;
+    reset_contadores(indiv[i]);
   }
 }
 
@@ -85,6 +79,7 @@ void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
     filho->angular_kp = mae->angular_kp + mut_ang;
     parentSum--;
   }
+  reset_contadores(filho);
 }
 
 void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
@@ -116,4 +111,14 @@ void atualizar_dist(int robot, float posX, float posY, float newPosX, float newP
   float dy = posY - newPosY;
   indiv[robot]->distanciaPercorrida += pow(dx, 2);
   indiv[robot]->distanciaPercorrida += pow(dy, 2);
+}
+
+void reset_contadores(robot_consts *ind_robot){
+  ind_robot->framesPerdidos   = 0;
+  ind_robot->maxQtdQuadrante  = 0;
+  ind_robot->qtdQuadrantes    = 0;
+  ind_robot->tempoNoQuadrante = 0;
+  ind_robot->tempoTotal       = 0;
+  ind_robot->ultimoQuarante   = 0;
+  ind_robot->fitness          = -1;
 }

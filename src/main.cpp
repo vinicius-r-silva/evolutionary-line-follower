@@ -51,27 +51,13 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg);
 
 //--------------------------------------------------------MAIN--------------------------------------------------------//
 int main(int argc, char **argv){
+  ROS_INFO("INIT LINE FOLLOWER");
+  
   int i = 0;
   ros::init(argc, argv, "main");
 
   srand(time(0));
   initPopulation();
-  pos_indv_atual = 0;
-  ROS_INFO("Iniciar Individuos Geracao\n");
-
-  // for(i = 0; i < TAM_POPULATION; i++){
-  //   ROS_INFO("%d, %.3f, %.3f\n", indiv[i]->v0, indiv[i]->angular_kp, indiv[i]->linear_kp);
-  // }
-
-  // robot_consts *vet_aux[6];
-  // for(int j = 0; j < 6; j++){
-  //   for(int k = 0; k < 6; k++){
-  //     vet_aux[k] = indiv[(6*j)+k];
-  //   }
-  //   indiv[36 + (2*j)] = indivBest[2*j];
-  //   indiv[37 + (2*j)] = indivBest[(2*j)+1];
-  //   cross(indivBest[2*j], indivBest[(2*j)+1], vet_aux);
-  // }
 
   char windowName[] = "estacaoX";
   for(i = 0; i < TAM_ESTACOES; i++){
@@ -135,11 +121,6 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   int estacao = msg->data[0]; //pega estacao do individuo
   int robot = estacao2robot[estacao];
 
-    ROS_INFO("STATION [%f], %d\n", msg->data[0], estacao);
-
-  if(estacao > 1)
-    ROS_INFO("FIX STATION [%d]\n", estacao);
-
   if(robot == -1)
     return;
 
@@ -147,7 +128,6 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
   float posX = msg->data[2];
   float posY = msg->data[3];
-
 
   atualizar_dist(robot, robotPos[robot]->x, robotPos[robot]->y , posX, posY);
 
@@ -164,11 +144,11 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
   if(check_kill_indiv(robot)){
 
-    calc_fitness(robot); // calcula o fitness do robo atual (que morreu)
+    calc_fitness(robot);
+    ROS_INFO("FIT Robot[%d] = %f\n", robot, indiv[robot]->fitness);
 
     //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
-      ROS_INFO("START ROBOT[%d]\n", pos_indv_atual);
       estacao2robot[estacao] = pos_indv_atual;
       pos_indv_atual++;
     }else{
@@ -180,16 +160,20 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
     if(isGenerationEnded()){
       std::sort(indiv.begin(), indiv.end(), compareFitness);
 
-      robot_consts *vet_aux[2];
+      ROS_INFO("APOS O SORT");
+
+      int qtd_pais = (TAM_POPULATION - TAM_BEST) / RAZAO_PAIS_FILHOS;
+
+      robot_consts *vet_aux[RAZAO_PAIS_FILHOS];
       int pai_index = rand() % TAM_BEST;
       int mae_index = rand() % TAM_BEST;
       while(mae_index == pai_index){
         mae_index = rand() % TAM_BEST;
       }
       
-      for(int j = 0; j < 18; j++){
-        for(int k = 0; k < 2; k++){
-          vet_aux[k] = indiv[TAM_BEST + (3*j)+k];
+      for(int j = 0; j < qtd_pais; j++){
+        for(int k = 0; k < RAZAO_PAIS_FILHOS; k++){
+          vet_aux[k] = indiv[TAM_BEST + (RAZAO_PAIS_FILHOS*j)+k];
         }
 
         pai_index = rand() % TAM_BEST;
@@ -197,9 +181,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
         while(mae_index == pai_index){
           mae_index = rand() % TAM_BEST;
         }
-        
-        // indiv[36 + (2*j)] = indivBest[2*j];
-        // indiv[37 + (2*j)] = indivBest[(2*j)+1];
+
         cross(indiv[pai_index], indiv[mae_index], vet_aux);
       }
 

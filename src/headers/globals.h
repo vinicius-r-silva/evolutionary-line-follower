@@ -30,6 +30,7 @@ using namespace cv;
 //36 filhos + 12 best, os best nao rodar novamente, pois ja possuem fitness
 #define TAM_POPULATION 48
 #define TAM_BEST 12
+#define RAZAO_PAIS_FILHOS 2
 #define CHANCE_MUTACAO 4
 
 #define MAX_VALUE_V0 250
@@ -74,7 +75,7 @@ typedef struct{
   //Calculo do fitness
   uint64_t tempoTotal;          //Soma total de frames (equiv ao tempoTotal)
   uint64_t distanciaPercorrida; //Soma do calculo das pequenas distancias pto a pto 
-  uint64_t fitness; //Contem o fitness do individuo para ordenacao e escolher os individuos para reproducao
+  double fitness; //Contem o fitness do individuo para ordenacao e escolher os individuos para reproducao
 
 } robot_consts; 
 

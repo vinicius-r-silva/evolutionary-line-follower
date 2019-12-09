@@ -18,7 +18,6 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
 
     if(robot == -1){
         sendSpeed(robotVel, estacao);
-        ROS_INFO("STATION %d\n", estacao);
         return;
     }
 
