@@ -12,7 +12,7 @@ void initPopulation(robot_consts **indiv);
 
 
 //Verifica se individuo deve morrer
-bool check_kill_indiv(robot_consts *indiv);
+bool check_kill_indiv(int robot);
 
 
 //Calcula o fitness do individuo - Media Ponderada

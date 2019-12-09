@@ -43,7 +43,5 @@ robot_vel getMotorsVelocity(delta error, robot_consts consts){
 
   result.Ve = Ve;
   result.Vd = Vd;
-  result.Ve = 0;
-  result.Vd = 0;
   return result;
 }

@@ -111,12 +111,12 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
 }
 
 
-bool check_kill_indiv(robot_consts *indiv){
+bool check_kill_indiv(int robot){
   //ind
   return false;
 }
 
 
 void atualizar_dist(robot_consts *indiv){
-
+  
 }
