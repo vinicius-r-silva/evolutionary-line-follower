@@ -36,8 +36,8 @@ using namespace cv;
 #define MAX_VALUE_LINEAR_KP 10
 #define MAX_VALUE_ANGULAR_KP 220
 
-#define MAX_FRAMES_POR_QUADRANTE 0
-#define MAX_FRAMES_SEM_LINHA 0
+#define MAX_FRAMES_POR_QUADRANTE 500
+#define MAX_FRAMES_SEM_LINHA 500
 
 //--------------------------------------------GLOBALS--------------------------------------------//
 typedef struct{
