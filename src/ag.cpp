@@ -26,6 +26,14 @@ void initPopulation(){
     indiv[i]->v0=(int16_t)((float) MAX_VALUE_V0         * randomize(-1, 1, 3));
     indiv[i]->linear_kp  = (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
     indiv[i]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
+    indiv[i]->distanciaPercorrida = 0;
+    indiv[i]->framesPerdidos   = 0;
+    indiv[i]->maxQtdQuadrante  = 0;
+    indiv[i]->qtdQuadrantes    = 0;
+    indiv[i]->tempoNoQuadrante = 0;
+    indiv[i]->tempoTotal       = 0;
+    indiv[i]->ultimoQuarante   = 0;
+    indiv[i]->fitness          = -1;
   }
 }
 
@@ -87,7 +95,7 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
 
 bool check_kill_indiv(int robot){
   if(indiv[robot]->tempoTotal > MAX_FRAMES_POR_QUADRANTE || indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA){
-    // return true;
+    return true;
   }
   return false;
 }

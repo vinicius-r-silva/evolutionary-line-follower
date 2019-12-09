@@ -158,22 +158,19 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
   if(check_kill_indiv(robot)){
     ROS_INFO("KILL ROBOT[%d]\n", robot);
-    reset_robot(estacao);
 
     calc_fitness(robot); // calcula o fitness do robo atual (que morreu)
-    
-    //calcular somente os que ainda nao possuem fitness
-    while(pos_indv_atual < TAM_POPULATION && indiv[pos_indv_atual]->fitness != -1){
-      pos_indv_atual++;
-    }
 
     //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
+      ROS_INFO("START ROBOT[%d]\n", pos_indv_atual);
       estacao2robot[estacao] = pos_indv_atual;
       pos_indv_atual++;
     }else{
       estacao2robot[estacao] = -1;
     }
+
+    reset_robot(estacao);
 
     if(isGenerationEnded()){
       std::sort(indiv.begin(), indiv.end(), compareFitness);
