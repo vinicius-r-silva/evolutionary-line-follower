@@ -107,7 +107,7 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
 
 bool check_kill_indiv(int robot){
   if(indiv[robot]->tempoTotal > MAX_FRAMES_POR_QUADRANTE || indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA){
-    return true;
+    // return true;
   }
   return false;
 }

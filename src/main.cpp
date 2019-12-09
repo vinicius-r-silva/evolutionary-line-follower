@@ -70,10 +70,6 @@ int main(int argc, char **argv){
     cross(indivBest[2*j], indivBest[(2*j)+1], vet_aux);
   }
 
-  for(int i = 0; i < TAM_POPULATION; i++){
-    ROS_INFO("INDIV[%d]: %d | %.2f | %.2f\n",i, indiv[i]->v0, indiv[i]->linear_kp, indiv[i]->angular_kp);    
-  }
-
   char windowName[] = "estacaoX";
   for(i = 0; i < TAM_ESTACOES; i++){
     windowName[7] = i + '0';
@@ -132,9 +128,6 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   if(robot == -1)
     return;
 
-  if(estacao != 0)
-    return;
-
   int quadrante = msg->data[1];
 
   float posX = msg->data[2];
@@ -153,7 +146,9 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   }
 
   if(check_kill_indiv(robot)){
+    ROS_INFO("KILL ROBOT[%d]\n", robot);
     reset_robot(estacao);
+
     calc_fitness(robot); // calcula o fitness do robo atual (que morreu)
     
     //calcular somente os que ainda nao possuem fitness

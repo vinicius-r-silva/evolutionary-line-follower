@@ -20,8 +20,6 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
         sendSpeed(robotVel, estacao);
         return;
     }
-    if(estacao == 0)
-      return;
 
     char robotName[] = "robot X";
     robotName[6] = robot + '0';
@@ -48,6 +46,7 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
         if(robot_error.angle != ERROR){
             robotVel = getMotorsVelocity(robot_error, consts);
             // robot_vel vel = {70,70};
+            cout << "Robot[" << robot << "] VE:" << robotVel.Ve << " VD:" << robotVel.Vd << endl;
             sendSpeed(robotVel, estacao);                     //send the motor speed to the robot
         }
         indiv[robot]->framesPerdidos = 0;
