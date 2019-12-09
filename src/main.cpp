@@ -146,6 +146,10 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos[robot]->y = msg->data[3];
   robotPos[robot]->theta = msg->data[4];
   robotPos[robot]->quadrante = quadrante;
+
+
+  // sendSpeed()
+  reset_robot(0);
   
   if(check_kill_indiv(robot)){
     reset_robot(estacao);
