@@ -5,7 +5,7 @@ extern robot_pos *robotPos[TAM_POPULATION];
 extern int estacao2robot[TAM_ESTACOES];
 
 //Vetor de individuos (Populacao)
-extern robot_consts *indiv[TAM_POPULATION];
+extern vector<robot_consts*> indiv;
 extern int pos_indv_atual;
 
 //Vetor dos melhores individuos sera utilizado para a reproducao (Best)

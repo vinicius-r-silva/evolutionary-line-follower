@@ -59,6 +59,10 @@ int main(int argc, char **argv){
   pos_indv_atual = 0;
   ROS_INFO("Iniciar Individuos Geracao\n");
 
+  // for(i = 0; i < TAM_POPULATION; i++){
+  //   ROS_INFO("%d, %.3f, %.3f\n", indiv[i]->v0, indiv[i]->angular_kp, indiv[i]->linear_kp);
+  // }
+
   // robot_consts *vet_aux[6];
   // for(int j = 0; j < 6; j++){
   //   for(int k = 0; k < 6; k++){
@@ -88,6 +92,7 @@ int main(int argc, char **argv){
     robotPos[i]->x = 0;
     robotPos[i]->y = 0;
     robotPos[i]->theta = 0;
+    robotPos[i]->quadrante = 1;
   }
 
   ros::Subscriber image_sub = n.subscribe("image", 10, getImage_callback);  //subscrive to \image topic
@@ -125,6 +130,7 @@ bool compareFitness(robot_consts* robot1, robot_consts* robot2){
 //callback from robot_pos topic
 //updates the current positon of the robot
 void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
+
   int i = 0;
   int estacao = msg->data[0]; //pega estacao do individuo
   int robot = estacao2robot[estacao];
@@ -136,6 +142,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
   float posX = msg->data[2];
   float posY = msg->data[3];
+
 
   atualizar_dist(robot, robotPos[robot]->x, robotPos[robot]->y , posX, posY);
 

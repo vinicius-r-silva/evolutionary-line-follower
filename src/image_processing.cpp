@@ -5,7 +5,7 @@ extern cv::Mat fliped_img;
 extern cv::Mat HLines_img;
 
 extern int estacao2robot[TAM_ESTACOES];
-extern robot_consts *indiv[TAM_POPULATION];
+extern vector<robot_consts*> indiv;
 
 //callback from getImage topic
 //receives the image from the robot onboard camera
