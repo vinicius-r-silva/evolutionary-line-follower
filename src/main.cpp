@@ -81,12 +81,18 @@ int main(int argc, char **argv){
     moveWindow(windowName, 20 +(i%2) * 310,20 + (i/2)*200);
   }
 
+  pos_indv_atual = 1;
   for(i = 0; i < TAM_ESTACOES; i++){
+<<<<<<< HEAD
     estacao2robot[i] = pos_indv_atual;
 /* 
     teste = getMotorsVelocity(delta, indiv[pos_indv_atual]);
     sendSpeed(teste, pos_indv_atual);
 */
+=======
+    estacao2robot[i] = i;
+    pos_indv_atual++;
+>>>>>>> f27f4787400c22db61cb832a99044723eb56828e
   }
 
   ros::NodeHandle n;
@@ -142,25 +148,26 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   robotPos[robot]->x = msg->data[2];
   robotPos[robot]->y = msg->data[3];
   robotPos[robot]->theta = msg->data[4];
+  robotPos[robot]->quadrante = quadrante;
 
-  bool kill_indv = check_kill_indiv(indiv[robot]); //ver se deve morrer
+
+  // sendSpeed()
+  reset_robot(0);
   
-  if(kill_indv){
-    //reset_robot();
-    calc_fitness(indiv[robot]); // calcula o fitness do robo atual (que morreu)
+  if(check_kill_indiv(robot)){
+    reset_robot(estacao);
+    calc_fitness(indiv[pos_indv_atual]); // calcula o fitness do robo atual (que morreu)
     
     //calcular somente os que ainda nao possuem fitness
-    while(pos_indv_atual < TAM_POPULATION && indiv[pos_indv_atual]->fitness != -1){
-      pos_indv_atual++;
-    }
+    // while(pos_indv_atual < TAM_POPULATION && indiv[pos_indv_atual]->fitness != -1){
+    //   pos_indv_atual++;
+    // }
 
     //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
-      //marcar pos_indv_atual na estacao
       estacao2robot[estacao] = pos_indv_atual;
-      //iniciar indv[pos_indv_atual]
+      pos_indv_atual++;
     }else{
-      //marcar -1 na estacao
       estacao2robot[estacao] = -1;
     }
   }

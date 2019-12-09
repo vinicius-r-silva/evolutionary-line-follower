@@ -49,17 +49,18 @@ typedef struct{
   float x;
   float y;
   float theta;
+  int quadrante;
 } robot_pos;
 
 typedef struct{
-  int16_t Ve;
+  uint8_t Ve;
   uint8_t Vd;
 } robot_vel;
 
 //struct individuo
 typedef struct{
   //Cromossomo
-  uint8_t v0;       //Velocidade
+  int16_t v0;       //Velocidade
   float linear_kp;  //Quao perto o individuo se mantem no centro da linha
   float angular_kp; //Quao sensivel o individuo realiza as curvas
 

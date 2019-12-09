@@ -14,9 +14,14 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     raw_img =  cv_bridge::toCvShare(msg, "bgr8")->image; //get the image
     int estacao = msg->header.frame_id[0] - '0';
     int robot = estacao2robot[estacao];
-    if(robot == -1)
-        return;
+    robot_vel robotVel = {0,0};                //later used to send the robot motor's speed
 
+    if(robot == -1){
+        sendSpeed(robotVel, estacao);
+        return;
+    }
+    if(estacao == 0)
+      return;
 
     char robotName[] = "robot X";
     robotName[6] = robot + '0';
@@ -25,7 +30,6 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     windowName[7] = estacao + '0';
 
     robot_consts consts = *(indiv[robot]);
-    robot_vel robotVel = {0,0};                //later used to send the robot motor's speed
     delta     robot_error;
 
     flip(raw_img,fliped_img, 0);               //since the raw image is fliped, the unflip it
@@ -43,22 +47,30 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
 
         if(robot_error.angle != ERROR){
             robotVel = getMotorsVelocity(robot_error, consts);
+            // robot_vel vel = {70,70};
             sendSpeed(robotVel, estacao);                     //send the motor speed to the robot
         }
+        indiv[robot]->framesPerdidos = 0;
     }
     else{
-
+      (indiv[robot]->framesPerdidos)++;
     }
 
     char sv0[15];
     char sang[15];
     char slin[15];
+    char ve[15];
+    char vd[15];
     sprintf (sv0, "v0 : %d", consts.v0);
     sprintf (sang, "ang: %.3f", consts.angular_kp);
     sprintf (slin, "lin: %.3f", consts.linear_kp);
+    sprintf (ve, "ve: %d", robotVel.Ve);
+    sprintf (vd, "vd: %d", robotVel.Vd);
     putText(HLines_img, sv0, Point(0,27), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, sang, Point(0,40), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, slin, Point(0,55), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
+    putText(HLines_img, ve, Point(0,70), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
+    putText(HLines_img, vd, Point(0,85), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, robotName, Point(0,15), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     imshow(windowName, HLines_img);       //shows the image with the choosen line printed on it
     waitKey(1);
