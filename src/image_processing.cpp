@@ -4,7 +4,7 @@ extern cv::Mat raw_img;
 extern cv::Mat fliped_img;
 extern cv::Mat HLines_img;
 
-extern int estacao2robot[TAM_ESTACOES];
+extern estacao estacao2robot[TAM_ESTACOES];
 extern vector<robot_consts*> indiv;
 
 //callback from getImage topic
@@ -13,7 +13,7 @@ extern vector<robot_consts*> indiv;
 void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     raw_img =  cv_bridge::toCvShare(msg, "bgr8")->image; //get the image
     int estacao = msg->header.frame_id[0] - '0';
-    int robot = estacao2robot[estacao];
+    int robot = estacao2robot[estacao].robot_station;
     robot_vel robotVel = {0,0};                //later used to send the robot motor's speed
 
     if(robot == -1){
@@ -137,4 +137,30 @@ Vec4i chooseLine(vector<Vec4i> linesP){
   }
 
   return result;
+}
+
+
+void ini_quadrantes(int estacao){
+  estacao2robot[estacao].quadrante = (quadrante*) malloc(4 * sizeof(quadrante));
+
+  quadrante quad_1;
+  quad_1.posX = 0;
+  quad_1.posY = 0;
+  estacao2robot[estacao].quadrante[0] = quad_1;
+  
+  quadrante quad_2;
+  quad_2.posX = 0;
+  quad_2.posY = 0;
+  estacao2robot[estacao].quadrante[1] = quad_2;
+
+  quadrante quad_3;
+  quad_3.posX = 0;
+  quad_3.posY = 0;
+  estacao2robot[estacao].quadrante[2] = quad_3;
+
+  quadrante quad_4;
+  quad_4.posX = 0;
+  quad_4.posY = 0;
+  estacao2robot[estacao].quadrante[3] = quad_4;
+
 }

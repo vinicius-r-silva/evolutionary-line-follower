@@ -33,7 +33,7 @@ std_msgs::UInt8MultiArray msg;
 
 robot_pos *robotPos[TAM_POPULATION];
 
-int estacao2robot[TAM_ESTACOES];
+estacao estacao2robot[TAM_ESTACOES];
 
 //Vetor de individuos (Populacao)
 vector<robot_consts*> indiv(TAM_POPULATION);
@@ -68,7 +68,9 @@ int main(int argc, char **argv){
 
   pos_indv_atual = 1;
   for(i = 0; i < TAM_ESTACOES; i++){
-    estacao2robot[i] = i;
+    estacao2robot[i].robot_station = i;
+    estacao2robot[i].id_quadrante = 0;
+    ini_quadrantes(i);
     pos_indv_atual++;
   }
 
@@ -118,18 +120,15 @@ bool compareFitness(robot_consts* robot1, robot_consts* robot2){
 void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
   int i = 0;
-  int estacao = msg->data[0]; //pega estacao do individuo
-  int robot = estacao2robot[estacao];
+  int estacao = msg->data[0];
+  int robot = estacao2robot[estacao].robot_station;
 
   if(robot == -1)
     return;
-
+  
   int quadrante = msg->data[1];
-
   float posX = msg->data[2];
   float posY = msg->data[3];
-
-  atualizar_dist(robot, robotPos[robot]->x, robotPos[robot]->y , posX, posY);
 
   robotPos[robot]->x = posX;
   robotPos[robot]->y = posY;
@@ -137,25 +136,26 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   indiv[robot]->tempoNoQuadrante++;
   indiv[robot]->tempoTotal++;
   
-  if(robotPos[robot]->quadrante < quadrante || (robotPos[robot]->quadrante == 4 && quadrante == 1)){
+  bool atualizar_quadrante = robotPos[robot]->quadrante < quadrante || (robotPos[robot]->quadrante == 4 && quadrante == 1);
+  if(atualizar_quadrante){
     robotPos[robot]->quadrante = quadrante;
+    estacao2robot[estacao].id_quadrante = quadrante;
     indiv[robot]->maxQtdQuadrante = quadrante;
     indiv[robot]->tempoNoQuadrante = 0;
+    atualizar_dist(robot, quadrante, 0.0, 0.0);
   }
 
   if(check_kill_indiv(robot)){
-
+    atualizar_dist(robot, quadrante, posX, posY);
     calc_fitness(robot);
-    ROS_INFO("State: %d Robot[%d] Dist:%ld Tempo:%ld Fit:%.4f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->tempoTotal, indiv[robot]->fitness);
+    ROS_INFO("State: %d Robot[%d] Dist:%.4f Tempo:%ld Fit:%.4f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->tempoTotal, indiv[robot]->fitness);
 
-    //se morreu, troca numero da estacao
     if(pos_indv_atual < TAM_POPULATION){
-      estacao2robot[estacao] = pos_indv_atual;
+      estacao2robot[estacao].robot_station = pos_indv_atual;
       pos_indv_atual++;
     }else{
-      estacao2robot[estacao] = -1;
+      estacao2robot[estacao].robot_station = -1;
     }
-
     reset_robot(estacao);
 
     if(isGenerationEnded()){
@@ -180,7 +180,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
       pos_indv_atual = TAM_BEST;
       for(i = 0; i < TAM_ESTACOES; i++){
-        estacao2robot[i] = pos_indv_atual;
+        estacao2robot[i].robot_station = pos_indv_atual;
         pos_indv_atual++;
       }
     }

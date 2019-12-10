@@ -74,11 +74,20 @@ typedef struct{
   
   //Calculo do fitness
   uint64_t tempoTotal;          //Soma total de frames (equiv ao tempoTotal)
-  uint64_t distanciaPercorrida; //Soma do calculo das pequenas distancias pto a pto 
+  double distanciaPercorrida; //Soma do calculo das pequenas distancias pto a pto 
   double fitness; //Contem o fitness do individuo para ordenacao e escolher os individuos para reproducao
 
 } robot_consts; 
 
+struct quadrante{
+  int posX;
+  int posY;
+};
 
+typedef struct{
+  int robot_station;
+  int id_quadrante;
+  struct quadrante *quadrante;
+} estacao;
 
 #endif

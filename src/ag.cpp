@@ -2,7 +2,7 @@
 
 extern robot_pos *robotPos[TAM_POPULATION];
 
-extern int estacao2robot[TAM_ESTACOES];
+extern estacao estacao2robot[TAM_ESTACOES];
 
 //Vetor de individuos (Populacao)
 extern vector<robot_consts*> indiv;
@@ -26,7 +26,6 @@ void initPopulation(){
     indiv[i]->v0=(int16_t)((float) MAX_VALUE_V0         * randomize(-1, 1, 3));
     indiv[i]->linear_kp  = (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
     indiv[i]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
-    indiv[i]->distanciaPercorrida = 0;
     reset_contadores(indiv[i]);
   }
 }
@@ -34,8 +33,9 @@ void initPopulation(){
 
 void calc_fitness(int robot){
   float fitness = 0.0;
+  double vel_med = indiv[robot]->distanciaPercorrida / (indiv[robot]->tempoTotal / TX_FPS); 
   fitness = PESO_DISTANCIA * indiv[robot]->distanciaPercorrida;
-  fitness += PESO_TEMPO_VIVO * (indiv[robot]->tempoTotal / TX_FPS);
+  fitness += PESO_VEL_MED * vel_med;
   indiv[robot]->fitness = fitness;
 }
 
@@ -98,7 +98,7 @@ bool check_kill_indiv(int robot){
 bool isGenerationEnded(){
   int i = 0;
   for(i = 0; i < TAM_ESTACOES; i++){
-    if(estacao2robot[i] != -1)
+    if(estacao2robot[i].robot_station != -1)
       return false;
   }
 
@@ -106,11 +106,29 @@ bool isGenerationEnded(){
 }
 
 
-void atualizar_dist(int robot, float posX, float posY, float newPosX, float newPosY){
-  float dx = posX - newPosX;
-  float dy = posY - newPosY;
-  indiv[robot]->distanciaPercorrida += pow(dx, 2);
-  indiv[robot]->distanciaPercorrida += pow(dy, 2);
+void atualizar_dist(int robot, int quadrante, int posX, int posY){
+  double dist = 0;
+  if(indiv[robot]->qtdQuadrantes != quadrante){ //Nao morreu
+    switch (quadrante){
+    case 1:
+      dist = 2;
+      break;
+    case 2:
+      dist = 4;
+      break;
+    case 3:
+      dist = 8;
+      break;
+    case 4:
+      dist = 16;
+      break;
+    }
+  }else{  //Morreu
+    dist = 32;
+  }
+
+  indiv[robot]->distanciaPercorrida += dist;
+
 }
 
 void reset_contadores(robot_consts *ind_robot){
@@ -120,5 +138,6 @@ void reset_contadores(robot_consts *ind_robot){
   ind_robot->tempoNoQuadrante = 0;
   ind_robot->tempoTotal       = 0;
   ind_robot->ultimoQuarante   = 0;
+  ind_robot->distanciaPercorrida = 0;
   ind_robot->fitness          = -1;
 }

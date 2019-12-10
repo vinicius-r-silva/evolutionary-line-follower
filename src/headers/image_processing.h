@@ -17,4 +17,7 @@ delta getError(Vec4i line);
 //the best line is the where the first coordiante is the futher away from the image
 Vec4i chooseLine(vector<Vec4i> linesP);
 
+//Inicia os quadrantes com os valores X e Y
+void ini_quadrantes(int estacao);
+
 #endif

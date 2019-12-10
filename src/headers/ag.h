@@ -3,8 +3,8 @@
 
 #include "globals.h"
 
-#define PESO_DISTANCIA  0.8
-#define PESO_TEMPO_VIVO 0.2
+#define PESO_DISTANCIA  6
+#define PESO_VEL_MED    4
 #define TX_FPS 30
 
 //Inicia a populacao de individuos
@@ -24,7 +24,7 @@ void calc_fitness(int robot);
 
 
 //Atualiza a distancia percorrida
-void atualizar_dist(int robot, float posX, float posY, float newPosX, float newPosY);
+void atualizar_dist(int robot, int quadrante, int posX, int posY);
 
 
 //Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 6 indivios novos
