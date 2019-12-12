@@ -55,7 +55,7 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     else{
       (indiv[robot]->framesPerdidos)++;
     }
-    (indiv[robot]->tempoTotal)++;
+    (indiv[robot]->framesTotal)++;
 
 
     char windowName[15] = "estacaoX";
@@ -148,26 +148,44 @@ Vec4i chooseLine(vector<Vec4i> linesP){
 
 
 void ini_quadrantes(int estacao){
-  estacao2robot[estacao].quadrante = (quadrante*) malloc(4 * sizeof(quadrante));
-
-  quadrante quad_1;
-  quad_1.posX = 0;
-  quad_1.posY = 0;
-  estacao2robot[estacao].quadrante[0] = quad_1;
   
+  estacao2robot[estacao].quadrante = (quadrante*) malloc(4 * sizeof(quadrante));
+  quadrante quad_1;
   quadrante quad_2;
-  quad_2.posX = 0;
-  quad_2.posY = 0;
-  estacao2robot[estacao].quadrante[1] = quad_2;
-
   quadrante quad_3;
-  quad_3.posX = 0;
-  quad_3.posY = 0;
-  estacao2robot[estacao].quadrante[2] = quad_3;
-
   quadrante quad_4;
-  quad_4.posX = 0;
-  quad_4.posY = 0;
+  int ii, jj;
+
+  switch (estacao){
+    case 0: ii = 1; break;
+    case 1: ii = 3; break;
+    case 2: ii = 2; break;
+    case 3: ii = 4; break;
+    case 4: ii = 5; break;
+    case 5: ii = 6; break;
+  }
+
+  jj = (int) ((ii -1) / 2);
+  quad_1.posX = (-0.095) + (6 * jj);
+  quad_2.posX = (1.875)  + (6 * jj);
+  quad_3.posX = (-1.175) + (6 * jj);
+  quad_4.posX = (-1.95)  + (6 * jj);
+  
+  quad_1.posY = 1.675;
+  quad_2.posY = 1.125;
+  quad_3.posY = (-1.9);
+  quad_4.posY = 1.025;
+  
+  if(!ii & 1){
+    quad_1.posY += 6;
+    quad_2.posY += 6;
+    quad_3.posY += 6;
+    quad_4.posY += 6;
+  }
+
+  estacao2robot[estacao].quadrante[0] = quad_1;
+  estacao2robot[estacao].quadrante[1] = quad_2;
+  estacao2robot[estacao].quadrante[2] = quad_3;
   estacao2robot[estacao].quadrante[3] = quad_4;
 }
 

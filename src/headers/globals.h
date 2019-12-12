@@ -37,7 +37,7 @@ using namespace cv;
 #define MAX_VALUE_LINEAR_KP 10
 #define MAX_VALUE_ANGULAR_KP 220
 
-#define MAX_FRAMES_POR_QUADRANTE 250
+#define MAX_FRAMES_POR_QUADRANTE 350
 #define MAX_FRAMES_SEM_LINHA 10
 
 #define PLOT_NEW_GENERATION -1
@@ -68,22 +68,22 @@ typedef struct{
   float angular_kp; //Quao sensivel o individuo realiza as curvas
 
   //Check kill
-  uint8_t qtdQuadrantes;    //Soma 1 toda vez que avança quadrante (2 voltas), sub 1 toda vez que volta quadrante
+  uint8_t qtdQuadrantes;    //Soma 1 toda vez que avança quadrante (2 voltas = 8 quadrantes), sub 1 toda vez que volta quadrante
   uint8_t ultimoQuarante;   //Ultimo quadrante que o individuo estava (para comparacao)
   uint8_t maxQtdQuadrante;  //Valor do maior quadrante que o individuo chegou
   uint64_t tempoNoQuadrante;  //Soma frames no mesmo quadrante, reseta apenas qndo maxQtdQuadrante e' atualizado
   uint64_t framesPerdidos;    //Soma 1 toda vez que existe um frame sem linha, reseta quando encontra linha
   
   //Calculo do fitness
-  uint64_t tempoTotal;          //Soma total de frames (equiv ao tempoTotal)
+  uint64_t framesTotal;       //Soma total de frames (equiv ao tempoTotal)
   double distanciaPercorrida; //Soma do calculo das pequenas distancias pto a pto 
   double fitness; //Contem o fitness do individuo para ordenacao e escolher os individuos para reproducao
 
 } robot_consts; 
 
 struct quadrante{
-  int posX;
-  int posY;
+  double posX;
+  double posY;
 };
 
 typedef struct{

@@ -32,10 +32,10 @@ void initPopulation(){
 
 
 void calc_fitness(int robot){
-  float fitness = 0.0;
-  double vel_med = indiv[robot]->distanciaPercorrida / (indiv[robot]->tempoTotal / TX_FPS); 
-  fitness = PESO_DISTANCIA * indiv[robot]->distanciaPercorrida;
-  fitness += PESO_VEL_MED * vel_med;
+  double fitness = 0.0;
+  double vel_med = (double) (indiv[robot]->distanciaPercorrida / indiv[robot]->framesTotal); 
+  fitness += (double) (PESO_DISTANCIA * indiv[robot]->distanciaPercorrida);
+  fitness += (double) (PESO_VEL_MED * vel_med);
   indiv[robot]->fitness = fitness;
 }
 
@@ -43,8 +43,8 @@ void calc_fitness(int robot){
 void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
   double mut_v0, mut_lin, mut_ang;
   mut_v0  = randomize(-0.025*MAX_VALUE_V0, 0.025*MAX_VALUE_V0, 4);
-  mut_ang = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
-  mut_lin = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
+  mut_ang = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
+  mut_lin = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
 
   int parentSum = 0;
   int parentChoice = (int) randomize(-10, 10, 0);
@@ -73,11 +73,9 @@ void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
     parentChoice = (int) randomize(-10, 10, 0);
     
   if(parentChoice < 0){
-    filho->angular_kp = pai->angular_kp + mut_ang;
-    parentSum++;
+    filho->linear_kp = pai->linear_kp + mut_lin;
   } else {
-    filho->angular_kp = mae->angular_kp + mut_ang;
-    parentSum--;
+    filho->linear_kp = mae->linear_kp + mut_lin;
   }
   reset_contadores(filho);
 }
@@ -89,10 +87,9 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
 
 
 bool check_kill_indiv(int robot){
-  if(indiv[robot]->tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE || indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA){
-    return true;
-  }
-  return false;
+  return  indiv[robot]->tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE ||
+          indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA ||
+          indiv[robot]->qtdQuadrantes == 8;
 }
 
 bool isGenerationEnded(){
@@ -108,23 +105,19 @@ bool isGenerationEnded(){
 
 void atualizar_dist(int robot, int quadrante, int posX, int posY){
   double dist = 0;
-  if(indiv[robot]->qtdQuadrantes != quadrante){ //Nao morreu
+  if(indiv[robot]->ultimoQuarante != quadrante){ //Nao morreu
     switch (quadrante){
-    case 1:
-      dist = 2;
-      break;
-    case 2:
-      dist = 4;
-      break;
-    case 3:
-      dist = 8;
-      break;
-    case 4:
-      dist = 16;
-      break;
+      case 1: dist = 35; break;
+      case 2: dist = 60; break;
+      case 3: dist = 40; break;
+      case 4: dist = 15; break;
     }
-  }else{  //Morreu
-    dist = 32;
+  }else{
+    double X = estacao2robot->quadrante[quadrante].posX;
+    double Y = estacao2robot->quadrante[quadrante].posY;
+    double dx2 = pow((posX - X), 2);
+    double dy2 = pow((posY - Y), 2);
+    dist = 10.0 * sqrt(dx2 + dy2);
   }
 
   indiv[robot]->distanciaPercorrida += dist;
@@ -136,8 +129,8 @@ void reset_contadores(robot_consts *ind_robot){
   ind_robot->maxQtdQuadrante  = 0;
   ind_robot->qtdQuadrantes    = 0;
   ind_robot->tempoNoQuadrante = 0;
-  ind_robot->tempoTotal       = 0;
-  ind_robot->ultimoQuarante   = 0;
+  ind_robot->framesTotal       = 0;
+  ind_robot->ultimoQuarante   = 1;
   ind_robot->distanciaPercorrida = 0;
   ind_robot->fitness          = -1;
 }
