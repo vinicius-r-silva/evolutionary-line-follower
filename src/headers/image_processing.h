@@ -20,4 +20,6 @@ Vec4i chooseLine(vector<Vec4i> linesP);
 //Inicia os quadrantes com os valores X e Y
 void ini_quadrantes(int estacao);
 
+void updateFitnessGraph();
+
 #endif

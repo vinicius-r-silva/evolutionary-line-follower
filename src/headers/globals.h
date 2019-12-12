@@ -40,6 +40,8 @@ using namespace cv;
 #define MAX_FRAMES_POR_QUADRANTE 250
 #define MAX_FRAMES_SEM_LINHA 10
 
+#define PLOT_NEW_GENERATION -1
+
 //--------------------------------------------GLOBALS--------------------------------------------//
 typedef struct{
   float shift;

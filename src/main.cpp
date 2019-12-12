@@ -39,6 +39,13 @@ estacao estacao2robot[TAM_ESTACOES];
 vector<robot_consts*> indiv(TAM_POPULATION);
 int pos_indv_atual;
 
+
+double sumFitness;
+double maxFitnessGen;
+double maxFitnessTotal;
+vector<double> maxFitnessVec;
+vector<double> medFitnessVec;
+
 //Vetor dos melhores individuos sera utilizado para a reproducao (Best)
 //vector<robot_consts*> indivBest(TAM_BEST);
 
@@ -104,6 +111,10 @@ int main(int argc, char **argv){
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
 
+  sumFitness = 0;
+  maxFitnessGen = 0;
+  maxFitnessTotal = 0;
+
   ros::spin();
   return 0;
 }
@@ -129,7 +140,8 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   int quadrante = msg->data[1];
   float posX = msg->data[2];
   float posY = msg->data[3];
-
+  double fitness;
+  
   robotPos[robot]->x = posX;
   robotPos[robot]->y = posY;
   robotPos[robot]->theta = msg->data[4];
@@ -148,6 +160,21 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   if(check_kill_indiv(robot)){
     atualizar_dist(robot, quadrante, posX, posY);
     calc_fitness(robot);
+    fitness = indiv[robot]->fitness;
+    
+    if(!isinf(fitness)){
+      sumFitness += fitness;
+      if(fitness > maxFitnessGen){
+        maxFitnessVec.push_back(fitness);
+        maxFitnessGen = fitness;
+
+        if(fitness > maxFitnessTotal)
+          maxFitnessTotal = fitness;
+
+        updateFitnessGraph();
+      }
+    }
+
     ROS_INFO("State: %d Robot[%d] Dist:%.4f Tempo:%ld Fit:%.4f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->tempoTotal, indiv[robot]->fitness);
 
     if(pos_indv_atual < TAM_POPULATION){
@@ -183,6 +210,16 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
         estacao2robot[i].robot_station = pos_indv_atual;
         pos_indv_atual++;
       }
+
+      maxFitnessVec.push_back(PLOT_NEW_GENERATION);
+      medFitnessVec.push_back(sumFitness/TAM_POPULATION);
+
+      sumFitness = 0;
+      maxFitnessGen = indiv[0]->fitness;
+      for(i = 0; i < TAM_POPULATION; i++){
+        sumFitness += indiv[i]->fitness;
+      }
+      ROS_INFO("New Gen: MaxFit: %lf", maxFitnessGen);
     }
   }
 }

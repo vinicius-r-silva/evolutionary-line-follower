@@ -7,6 +7,13 @@ extern cv::Mat HLines_img;
 extern estacao estacao2robot[TAM_ESTACOES];
 extern vector<robot_consts*> indiv;
 
+
+extern double sumFitness;
+extern double maxFitnessGen;
+extern double maxFitnessTotal;
+extern vector<double> maxFitnessVec;
+extern vector<double> medFitnessVec;
+
 //callback from getImage topic
 //receives the image from the robot onboard camera
 //detects the black line in the image, if there is any
@@ -162,5 +169,54 @@ void ini_quadrantes(int estacao){
   quad_4.posX = 0;
   quad_4.posY = 0;
   estacao2robot[estacao].quadrante[3] = quad_4;
+}
 
+void updateFitnessGraph(){
+  int imgHeight = 480;
+  int imgWidth  = 640;
+  int Qtd = maxFitnessVec.size();
+  Mat graph(imgHeight, imgWidth, CV_8UC3, Scalar(0,0,0));
+  
+  int i = 0;
+  char label[15];
+  Point tempPt(0, 0);
+  double FitnessTemp = maxFitnessTotal*10/8;
+  double verticalStep = FitnessTemp/imgHeight;
+  for(i = 0; i < 4; i++){
+    tempPt.y = (imgHeight*(1 + i)/5);
+    sprintf(label, "%.1lf", FitnessTemp*(4 - i)/5);
+    putText(graph, label, tempPt, FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
+  }
+
+  int HorizontalStep = imgWidth/(Qtd+1);
+  Point firstPt(0,imgHeight);
+  Point secondPt(0,0);
+  
+  
+  for(i = 0; i < Qtd; i++){
+    secondPt.x += HorizontalStep;
+    secondPt.y = imgHeight - maxFitnessVec[i] * verticalStep;
+
+    if(maxFitnessVec[i] == PLOT_NEW_GENERATION)
+      continue;
+
+    line(graph, firstPt, secondPt, Scalar(255,0,0), 1, 8, 0);
+    ROS_INFO("Vec[i]: %0.2lf, MaxTotal: %0.2lf, Points: %d %d (%lf) to %d %d (%lf)", maxFitnessVec[i], maxFitnessTotal, firstPt.x, firstPt.y, (imgHeight - firstPt.y)/verticalStep, secondPt.x, secondPt.y,  (imgHeight - secondPt.y)/verticalStep);
+    firstPt.x = secondPt.x;
+    firstPt.y = secondPt.y;
+  }
+  // while(i < imgWidth){
+  //   i += HorizontalStep;
+  //   firstPt.x = verticalStep * indiv;
+
+  //   if(maxFitnessVec[i] == PLOT_NEW_GENERATION)
+  //     continue;
+
+  //   line(graph, firstPt, secondPt, Scalar(255,0,0), 1, 8, 0);
+  //   ROS_INFO("%d %d to %d %d", firstPt.x, firstPt.y, secondPt.x, secondPt.y);
+  //   secondPt.x = firstPt.x;
+
+  // }
+
+  imshow("graph", graph);
 }
