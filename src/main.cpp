@@ -190,10 +190,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
         updateFitnessGraph();
       }
     }
-
-    //ROS_INFO("State: %d Robot[%d] Dist:%.4f Tempo:%ld Fit:%.4f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->tempoTotal, indiv[robot]->fitness);
-    ROS_INFO("Estacao:%d Robot[%02d] Dist:%4.2f Time:%04ld Fit:%4.2f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->framesTotal, indiv[robot]->fitness);
-
+    
     if(ind_next_robot < TAM_POPULATION){
       estacao2robot[estacao].robot_station = ind_next_robot;
       ind_next_robot++;
