@@ -43,8 +43,8 @@ void calc_fitness(int robot){
 void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
   double mut_v0, mut_lin, mut_ang;
   mut_v0  = randomize(-0.025*MAX_VALUE_V0, 0.025*MAX_VALUE_V0, 4);
-  mut_ang = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
-  mut_lin = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
+  mut_ang = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
+  mut_lin = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
 
   int parentSum = 0;
   int parentChoice = (int) randomize(-10, 10, 0);
@@ -73,11 +73,9 @@ void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
     parentChoice = (int) randomize(-10, 10, 0);
     
   if(parentChoice < 0){
-    filho->angular_kp = pai->angular_kp + mut_ang;
-    parentSum++;
+    filho->linear_kp = pai->linear_kp + mut_lin;
   } else {
-    filho->angular_kp = mae->angular_kp + mut_ang;
-    parentSum--;
+    filho->linear_kp = mae->linear_kp + mut_lin;
   }
   reset_contadores(filho);
 }
@@ -119,7 +117,7 @@ void atualizar_dist(int robot, int quadrante, int posX, int posY){
     double Y = estacao2robot->quadrante[quadrante].posY;
     double dx2 = pow((posX - X), 2);
     double dy2 = pow((posY - Y), 2);
-    dist = sqrt(dx2 + dy2);
+    dist = 10.0 * sqrt(dx2 + dy2);
   }
 
   indiv[robot]->distanciaPercorrida += dist;
