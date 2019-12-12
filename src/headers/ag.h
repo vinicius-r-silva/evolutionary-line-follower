@@ -24,7 +24,7 @@ void calc_fitness(int robot);
 
 
 //Atualiza a distancia percorrida
-void atualizar_dist(int robot, int quadrante, int posX, int posY);
+void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY);
 
 
 //Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 6 indivios novos

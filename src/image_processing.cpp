@@ -147,33 +147,91 @@ void ini_quadrantes(int estacao){
   quadrante quad_2;
   quadrante quad_3;
   quadrante quad_4;
-  int ii, jj;
 
   switch (estacao){
-    case 0: ii = 1; break;
-    case 1: ii = 3; break;
-    case 2: ii = 2; break;
-    case 3: ii = 4; break;
-    case 4: ii = 5; break;
-    case 5: ii = 6; break;
-  }
+    case 0:
+      quad_1.posX = (-0.975);
+      quad_1.posY = 1.675;
+      
+      quad_2.posX = (1.875);
+      quad_2.posY = 1.125;
+      
+      quad_3.posX = (-1.175);
+      quad_3.posY = (-1.9);
 
-  jj = (int) ((ii -1) / 2);
-  quad_1.posX = (-0.095) + (6 * jj);
-  quad_2.posX = (1.875)  + (6 * jj);
-  quad_3.posX = (-1.175) + (6 * jj);
-  quad_4.posX = (-1.95)  + (6 * jj);
-  
-  quad_1.posY = 1.675;
-  quad_2.posY = 1.125;
-  quad_3.posY = (-1.9);
-  quad_4.posY = 1.025;
-  
-  if(!ii & 1){
-    quad_1.posY += 6;
-    quad_2.posY += 6;
-    quad_3.posY += 6;
-    quad_4.posY += 6;
+      quad_4.posX = (-1.95);
+      quad_4.posY = 0.975;
+      break;
+
+    case 1:
+      quad_1.posX = (5.025);
+      quad_1.posY = 1.675;
+      
+      quad_2.posX = (7.875);
+      quad_2.posY = 1.125;
+      
+      quad_3.posX = (4.825);
+      quad_3.posY = (-1.9);
+      
+      quad_4.posX = (4.05);
+      quad_4.posY = 0.975;
+      break;
+
+    case 2:
+      quad_1.posX = (-0.975);
+      quad_1.posY = 7.675;
+      
+      quad_2.posX = (1.875);
+      quad_2.posY = 7.125;
+      
+      quad_3.posX = (-1.175);
+      quad_3.posY = (4.1);
+      
+      quad_4.posX = (-1.95);
+      quad_4.posY = 7.025;
+      break;
+
+    case 3:
+      quad_1.posX = (5.025);
+      quad_1.posY = 7.675;
+      
+      quad_2.posX = (7.875);
+      quad_2.posY = 7.125;
+      
+      quad_3.posX = (4.825);
+      quad_3.posY = (4.1);
+      
+      quad_4.posX = (4.05);
+      quad_4.posY = 7.025;
+      break;
+
+    case 4:
+      quad_1.posX = (11.025);
+      quad_1.posY = 1.675;
+      
+      quad_2.posX = (13.875);
+      quad_2.posY = 1.125;
+      
+      quad_3.posX = (10.825);
+      quad_3.posY = (-1.9);
+      
+      quad_4.posX = (10.05);
+      quad_4.posY = 1.025;
+      break;
+
+    case 5:
+      quad_1.posX = (11.025);
+      quad_1.posY = 7.675;
+      
+      quad_2.posX = (13.875);
+      quad_2.posY = 7.125;
+      
+      quad_3.posX = (10.825);
+      quad_3.posY = (4.1);
+      
+      quad_4.posX = (10.05);
+      quad_4.posY = 7.025;
+      break;
   }
 
   estacao2robot[estacao].quadrante[0] = quad_1;

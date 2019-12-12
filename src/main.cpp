@@ -37,7 +37,9 @@ estacao estacao2robot[TAM_ESTACOES];
 
 //Vetor de individuos (Populacao)
 vector<robot_consts*> indiv(TAM_POPULATION);
-int pos_indv_atual;
+int ind_next_robot;
+
+int generation;
 
 //Vetor dos melhores individuos sera utilizado para a reproducao (Best)
 //vector<robot_consts*> indivBest(TAM_BEST);
@@ -54,6 +56,8 @@ int main(int argc, char **argv){
   ROS_INFO("INIT LINE FOLLOWER");
   
   int i = 0;
+  generation = 0;
+
   ros::init(argc, argv, "main");
 
   srand(time(0));
@@ -66,12 +70,12 @@ int main(int argc, char **argv){
     moveWindow(windowName, 20 +(i%2) * 310,20 + (i/2)*200);
   }
 
-  pos_indv_atual = 1;
+  ind_next_robot = 1;
   for(i = 0; i < TAM_ESTACOES; i++){
     estacao2robot[i].robot_station = i;
-    estacao2robot[i].id_quadrante = 0;
+    estacao2robot[i].id_quadrante = 1;
     ini_quadrantes(i);
-    pos_indv_atual++;
+    ind_next_robot++;
   }
 
   ros::NodeHandle n;
@@ -140,34 +144,39 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   
   bool atualizar_quadrante = robotPos[robot]->quadrante < quadrante || (robotPos[robot]->quadrante == 4 && quadrante == 1);
   if(atualizar_quadrante){
-    atualizar_dist(robot, quadrante, 0.0, 0.0);
+    atualizar_dist(robot, 0, quadrante, 0.0, 0.0);
     
     robotPos[robot]->quadrante = quadrante;
     estacao2robot[estacao].id_quadrante = quadrante;
     
-    indiv[robot]->ultimoQuarante = quadrante;
+    indiv[robot]->ultimoQuadrante = quadrante;
     indiv[robot]->maxQtdQuadrante = quadrante;
     indiv[robot]->tempoNoQuadrante = 0;
     indiv[robot]->qtdQuadrantes++;
 
-  }else if(robotPos[robot]->quadrante > quadrante){
+  }else if(indiv[robot]->ultimoQuadrante != quadrante){
     indiv[robot]->qtdQuadrantes--;
   }
 
   if(check_kill_indiv(robot)){
-    atualizar_dist(robot, quadrante, posX, posY);
+    atualizar_dist(robot, estacao, quadrante, posX, posY);
     calc_fitness(robot);
-    ROS_INFO("Estacao:%d Robot[%02d] Dist:%4.2f Time:%04ld Fit:%4.2f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->framesTotal, indiv[robot]->fitness);
+    
+    //Debug
+    ROS_INFO("Robot[%02d] Estacao:%d Quad:%d Dist:%.2f Time:%ld Fit:%.2f", robot, estacao, quadrante, indiv[robot]->distanciaPercorrida, indiv[robot]->framesTotal, indiv[robot]->fitness);
 
-    if(pos_indv_atual < TAM_POPULATION){
-      estacao2robot[estacao].robot_station = pos_indv_atual;
-      pos_indv_atual++;
+    if(ind_next_robot < TAM_POPULATION){
+      estacao2robot[estacao].robot_station = ind_next_robot;
+      ind_next_robot++;
     }else{
       estacao2robot[estacao].robot_station = -1;
     }
     reset_robot(estacao);
 
     if(isGenerationEnded()){
+      generation++;
+      ROS_INFO("----------------- Generation %d -----------------", generation);
+      
       std::sort(indiv.begin(), indiv.end(), compareFitness);
       int qtd_pais = (TAM_POPULATION - TAM_BEST) / RAZAO_PAIS_FILHOS;
 
@@ -179,18 +188,18 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
         for(int k = 0; k < RAZAO_PAIS_FILHOS; k++){
           vet_aux[k] = indiv[TAM_BEST + (RAZAO_PAIS_FILHOS*j)+k];
         }
-        pai_index = rand() % TAM_BEST;
-        mae_index = rand() % TAM_BEST;
+        pai_index = (int) randomize(0, TAM_BEST, 0);
+        mae_index = (int) randomize(0, TAM_BEST, 0);
         while(mae_index == pai_index){
-          mae_index = rand() % TAM_BEST;
+          mae_index = (int) randomize(0, TAM_BEST, 0);
         }
         cross(indiv[pai_index], indiv[mae_index], vet_aux);
       }
 
-      pos_indv_atual = TAM_BEST;
+      ind_next_robot = TAM_BEST;
       for(i = 0; i < TAM_ESTACOES; i++){
-        estacao2robot[i].robot_station = pos_indv_atual;
-        pos_indv_atual++;
+        estacao2robot[i].robot_station = ind_next_robot;
+        ind_next_robot++;
       }
     }
   }
