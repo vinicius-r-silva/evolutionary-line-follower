@@ -41,6 +41,13 @@ int ind_next_robot;
 
 int generation;
 
+
+double sumFitness;
+double maxFitnessGen;
+double maxFitnessTotal;
+vector<double> maxFitnessVec;
+vector<double> medFitnessVec;
+
 //Vetor dos melhores individuos sera utilizado para a reproducao (Best)
 //vector<robot_consts*> indivBest(TAM_BEST);
 
@@ -108,6 +115,10 @@ int main(int argc, char **argv){
   msg.layout.dim[0].stride = 1;
   msg.layout.dim[0].label = "robot_velocity";
 
+  sumFitness = 0;
+  maxFitnessGen = 0;
+  maxFitnessTotal = 0;
+
   ros::spin();
   return 0;
 }
@@ -133,7 +144,8 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   int quadrante = msg->data[1];
   float posX = msg->data[2];
   float posY = msg->data[3];
-
+  double fitness;
+  
   robotPos[robot]->x = posX;
   robotPos[robot]->y = posY;
   robotPos[robot]->theta = msg->data[4];
@@ -164,6 +176,23 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
     
     //Debug
     ROS_INFO("Robot[%02d] Estacao:%d Quad:%d Dist:%.2f Time:%ld Fit:%.2f", robot, estacao, quadrante, indiv[robot]->distanciaPercorrida, indiv[robot]->framesTotal, indiv[robot]->fitness);
+    fitness = indiv[robot]->fitness;
+    
+    if(!isinf(fitness)){
+      sumFitness += fitness;
+      if(fitness > maxFitnessGen){
+        maxFitnessVec.push_back(fitness);
+        maxFitnessGen = fitness;
+
+        if(fitness > maxFitnessTotal)
+          maxFitnessTotal = fitness;
+
+        updateFitnessGraph();
+      }
+    }
+
+    //ROS_INFO("State: %d Robot[%d] Dist:%.4f Tempo:%ld Fit:%.4f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->tempoTotal, indiv[robot]->fitness);
+    ROS_INFO("Estacao:%d Robot[%02d] Dist:%4.2f Time:%04ld Fit:%4.2f",estacao, robot, indiv[robot]->distanciaPercorrida,indiv[robot]->framesTotal, indiv[robot]->fitness);
 
     if(ind_next_robot < TAM_POPULATION){
       estacao2robot[estacao].robot_station = ind_next_robot;
@@ -201,6 +230,16 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
         estacao2robot[i].robot_station = ind_next_robot;
         ind_next_robot++;
       }
+
+      maxFitnessVec.push_back(PLOT_NEW_GENERATION);
+      medFitnessVec.push_back(sumFitness/TAM_POPULATION);
+
+      sumFitness = 0;
+      maxFitnessGen = indiv[0]->fitness;
+      for(i = 0; i < TAM_POPULATION; i++){
+        sumFitness += indiv[i]->fitness;
+      }
+      ROS_INFO("New Gen: MaxFit: %lf", maxFitnessGen);
     }
   }
 }
