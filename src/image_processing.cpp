@@ -71,10 +71,7 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     char LostFrames[25];
     char distPercorrida[25];
     sprintf (sv0, "v0 : %d", consts.v0);
-
-    sprintf (sang, "ang: %.3f", robot_error.angle);
-    // sprintf (sang, "ang: %.3f", consts.angular_kp);
-
+    sprintf (sang, "ang: %.3f", consts.angular_kp);
     sprintf (slin, "lin: %.3f", consts.linear_kp);
     sprintf (ve, "ve: %d", robotVel.Ve > 127 ? robotVel.Ve - 256 : robotVel.Ve);
     sprintf (vd, "vd: %d", robotVel.Vd > 127 ? robotVel.Vd - 256 : robotVel.Vd);
