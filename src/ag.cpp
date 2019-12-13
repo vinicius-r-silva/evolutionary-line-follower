@@ -250,6 +250,12 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, b
       case 4: dist = 15; break;
     }
   }else if(!terminou_volta){
+    ROS_INFO("------------\nQuadrante: %d\n", quadrante);
+
+    if(quadrante == 4){
+      ROS_INFO("----------------------------------------------------------------\n----------------------------------------------------------------\nquarante == 4\n----------------------------------------------------------------\n----------------------------------------------------------------\n");
+    }
+
     double X = estacao2robot[estacao].quadrante[quadrante].posX;
     double Y = estacao2robot[estacao].quadrante[quadrante].posY;
     double dx2 = pow((posX - X), 2);
