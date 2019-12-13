@@ -207,24 +207,14 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
       
       std::sort(indiv.begin(), indiv.end(), compareFitness);
 
-      // initCross();
-      bestFit();
-
-      ind_next_robot = TAM_BEST;
-      for(i = 0; i < TAM_ESTACOES; i++){
-        estacao2robot[i].robot_station = ind_next_robot;
-        ind_next_robot++;
-      }
-
       maxFitnessVec.push_back(PLOT_NEW_GENERATION);
       medFitnessVec.push_back(sumFitness/TAM_POPULATION);
       updateFitnessGraph();
+      
+      // initCross();
+      bestFit();
+      // torneio();
 
-      sumFitness = 0;
-      maxFitnessGen = indiv[0]->fitness;
-      for(i = 0; i < TAM_POPULATION; i++){
-        sumFitness += indiv[i]->fitness;
-      }
 
       ROS_INFO("\n\n----------------------------------New Gen: MaxFit: %lf\n", maxFitnessGen);
     }

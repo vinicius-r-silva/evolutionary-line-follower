@@ -6,11 +6,16 @@ extern estacao estacao2robot[TAM_ESTACOES];
 
 //Vetor de individuos (Populacao)
 extern vector<robot_consts*> indiv;
-extern int pos_indv_atual;
+extern int ind_next_robot;
 
 //Vetor dos melhores individuos sera utilizado para a reproducao (Best)
 extern robot_consts *indivBest[TAM_BEST];
 
+extern double sumFitness;
+extern double maxFitnessGen;
+extern double maxFitnessTotal;
+extern vector<double> maxFitnessVec;
+extern vector<double> medFitnessVec;
 
 double randomize(double inicio_range, double final_range, int casas_precisao){
   double div_value = pow(10, casas_precisao) * final_range;
@@ -102,6 +107,19 @@ void initCross(){
       cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
       filho_index++;
   }
+
+
+  ind_next_robot = TAM_BEST;
+  for(i = 0; i < TAM_ESTACOES; i++){
+    estacao2robot[i].robot_station = ind_next_robot;
+    ind_next_robot++;
+  }
+
+  sumFitness = 0;
+  maxFitnessGen = indiv[0]->fitness;
+  for(i = 0; i < TAM_POPULATION; i++){
+    sumFitness += indiv[i]->fitness;
+  }
 }
 
 void bestFit(){
@@ -118,8 +136,59 @@ void bestFit(){
     indiv[i]->linear_kp = (indiv[0]->linear_kp + indiv[i]->linear_kp)/2 + mut_lin;
     indiv[i]->angular_kp = (indiv[0]->angular_kp + indiv[i]->angular_kp)/2 + mut_ang;
   }
+
+  ind_next_robot = 1;
+  for(i = 0; i < TAM_ESTACOES; i++){
+    estacao2robot[i].robot_station = ind_next_robot;
+    ind_next_robot++;
+  }
+
+  sumFitness = indiv[0]->fitness;
+  maxFitnessGen = indiv[0]->fitness;
 }
 
+
+void torneio(){
+  int i;
+  int a, b, pai1, pai2;
+  double mut_v0, mut_lin, mut_ang;
+  vector<robot_consts*> tempIndiv = indiv;
+
+  for (i = 1; i <= TAM_POPULATION; i++){
+    // Sorteia dois individuos para 1ro torneio
+    a = (rand() % TAM_POPULATION);
+    b = (rand() % TAM_POPULATION);
+    if (tempIndiv[a]->fitness > tempIndiv[b]->fitness)
+        pai1 = a;
+    else
+        pai1 = b;
+
+    // Sorteia mais dois individuos para 2do torneio
+    a = (rand() % TAM_POPULATION);
+    b = (rand() % TAM_POPULATION);
+    if (tempIndiv[a]->fitness > tempIndiv[b]->fitness)
+        pai2 = a;
+    else
+        pai2 = b;
+
+    mut_v0  = randomize(-0.025*MAX_VALUE_V0, 0.025*MAX_VALUE_V0, 4);
+    mut_ang = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
+    mut_lin = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
+    
+    indiv[i]->v0 = (tempIndiv[pai1]->v0 + tempIndiv[pai2]->v0)/2 + mut_v0;
+    indiv[i]->linear_kp = (tempIndiv[pai1]->linear_kp + tempIndiv[pai2]->linear_kp)/2 + mut_lin;
+    indiv[i]->angular_kp = (tempIndiv[pai1]->angular_kp + tempIndiv[pai2]->angular_kp)/2 + mut_ang;
+  }
+
+  ind_next_robot = 1;
+  for(i = 0; i < TAM_ESTACOES; i++){
+    estacao2robot[i].robot_station = ind_next_robot;
+    ind_next_robot++;
+  }
+
+  sumFitness = indiv[0]->fitness;
+  maxFitnessGen = indiv[0]->fitness;
+}
 
 bool check_kill_indiv(int robot){
   return  indiv[robot]->tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE ||

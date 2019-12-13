@@ -23,7 +23,7 @@ using namespace cv;
 #define HoughLineTH 40
 #define ERROR -1000
 
-#define MAX_SPEED 40
+#define MAX_SPEED 127
 
 #define TAM_ESTACOES 6
 
