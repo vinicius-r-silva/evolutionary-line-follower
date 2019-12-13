@@ -217,57 +217,14 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
       
       std::sort(indiv.begin(), indiv.end(), compareFitness);
 
-      int pai_index;
-      int mae_index;
-      int filho_index = TAM_BEST;
-
-      for(i = 0; i < (TAM_POPULATION - TAM_BEST) / 2; i++){
-          pai_index = rand() % TAM_BEST;
-          mae_index = rand() % TAM_BEST;
-          while(mae_index == pai_index){
-            mae_index = rand() % TAM_BEST;
-          }
-
-          // ROS_INFO("cross de %d e %d para %d e %d", pai_index, mae_index, filho_index, filho_index + 1);
-
-          cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
-          filho_index++;
-          cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
-          filho_index++;
-      }
-      // ROS_INFO("transou");
-      
-      // for(int j = 0; j < qtd_pais; j++){
-      //   for(int k = 0; k < RAZAO_PAIS_FILHOS; k++){
-      //     vet_aux[k] = indiv[TAM_BEST + (RAZAO_PAIS_FILHOS*j)+k];
-      //   }
-      //   pai_index = rand() % TAM_BEST;
-      //   mae_index = rand() % TAM_BEST;
-      //   while(mae_index == pai_index){
-      //     mae_index = rand() % TAM_BEST;
-      //   }
-      //   cross(indiv[pai_index], indiv[mae_index], vet_aux);
-      // }
-
-      ind_next_robot = TAM_BEST;
-      for(i = 0; i < TAM_ESTACOES; i++){
-        estacao2robot[i].robot_station = ind_next_robot;
-        ind_next_robot++;
-      }
-
       maxFitnessVec.push_back(PLOT_NEW_GENERATION);
       medFitnessVec.push_back(sumFitness/TAM_POPULATION);
       updateFitnessGraph();
 
-      // for(i = 0; i < TAM_POPULATION; i++){
-      //   ROS_INFO("Robot %d. Fit: %lf", i, indiv[i]->fitness);
-      // }
+      // initCross();
+      // bestFit();
+      torneio();
 
-      sumFitness = 0;
-      maxFitnessGen = indiv[0]->fitness;
-      for(i = 0; i < TAM_POPULATION; i++){
-        sumFitness += indiv[i]->fitness;
-      }
 
       ROS_INFO("\n\n----------------------------------New Gen: MaxFit: %lf\n", maxFitnessGen);
     }

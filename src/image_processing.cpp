@@ -78,8 +78,8 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     // sprintf (sang, "ang: %.3f", consts.angular_kp);
 
     sprintf (slin, "lin: %.3f", consts.linear_kp);
-    sprintf (ve, "ve: %d", robotVel.Ve);
-    sprintf (vd, "vd: %d", robotVel.Vd);
+    sprintf (ve, "ve: %d", robotVel.Ve > 127 ? robotVel.Ve - 256 : robotVel.Ve);
+    sprintf (vd, "vd: %d", robotVel.Vd > 127 ? robotVel.Vd - 256 : robotVel.Vd);
     sprintf (robotName, "robot: %d", robot);
     sprintf (timeQuad, "QuadT: %ld", indiv[robot]->tempoNoQuadrante);
     sprintf (LostFrames, "Lost: %ld", indiv[robot]->framesPerdidos);
