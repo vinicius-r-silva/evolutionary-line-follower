@@ -210,10 +210,10 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
       maxFitnessVec.push_back(PLOT_NEW_GENERATION);
       medFitnessVec.push_back(sumFitness/TAM_POPULATION);
       updateFitnessGraph();
-      
+
       // initCross();
-      bestFit();
-      // torneio();
+      // bestFit();
+      torneio();
 
 
       ROS_INFO("\n\n----------------------------------New Gen: MaxFit: %lf\n", maxFitnessGen);

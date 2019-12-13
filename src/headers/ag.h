@@ -35,6 +35,8 @@ void initCross();
 
 void bestFit();
 
+void torneio();
+
 //retorna valor entre inicio_range e final_range com precisao de x casas 
 double randomize(double inicio_range, double final_range, int casas_precisao);
 

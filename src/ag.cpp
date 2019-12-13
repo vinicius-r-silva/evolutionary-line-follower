@@ -37,6 +37,16 @@ void initPopulation(){
 }
 
 
+void copyPop(vector<robot_consts*> *tempIndiv){
+  for(int i = 0; i < TAM_POPULATION; i++){
+    (*tempIndiv)[i] = (robot_consts*)malloc(sizeof(robot_consts));
+    (*tempIndiv)[i]->v0= indiv[i]->v0;
+    (*tempIndiv)[i]->linear_kp  = indiv[i]->linear_kp;
+    (*tempIndiv)[i]->angular_kp = indiv[i]->angular_kp;
+    (*tempIndiv)[i]->fitness = indiv[i]->fitness;
+  }
+}
+
 void calc_fitness(int robot){
   double fitness = 0.0;
   double vel_med = (double) (indiv[robot]->distanciaPercorrida / indiv[robot]->framesTotal); 
@@ -148,33 +158,40 @@ void bestFit(){
 }
 
 
+
+
 void torneio(){
   int i;
   int a, b, pai1, pai2;
   double mut_v0, mut_lin, mut_ang;
-  vector<robot_consts*> tempIndiv = indiv;
+  vector<robot_consts*> tempIndiv(TAM_POPULATION);
 
-  for (i = 1; i <= TAM_POPULATION; i++){
+  copyPop(&tempIndiv);
+
+  for (i = 1; i < TAM_POPULATION; i++){
     // Sorteia dois individuos para 1ro torneio
-    a = (rand() % TAM_POPULATION);
-    b = (rand() % TAM_POPULATION);
+    a = (int)(randomize(0, TAM_POPULATION, 0));
+    b = (int)(randomize(0, TAM_POPULATION, 0));
+
     if (tempIndiv[a]->fitness > tempIndiv[b]->fitness)
         pai1 = a;
     else
         pai1 = b;
 
     // Sorteia mais dois individuos para 2do torneio
-    a = (rand() % TAM_POPULATION);
-    b = (rand() % TAM_POPULATION);
+    a = (int)(randomize(0, TAM_POPULATION, 0));
+    b = (int)(randomize(0, TAM_POPULATION, 0));
+
     if (tempIndiv[a]->fitness > tempIndiv[b]->fitness)
         pai2 = a;
     else
         pai2 = b;
-
+    
     mut_v0  = randomize(-0.025*MAX_VALUE_V0, 0.025*MAX_VALUE_V0, 4);
     mut_ang = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
     mut_lin = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
     
+    reset_contadores(indiv[i]);
     indiv[i]->v0 = (tempIndiv[pai1]->v0 + tempIndiv[pai2]->v0)/2 + mut_v0;
     indiv[i]->linear_kp = (tempIndiv[pai1]->linear_kp + tempIndiv[pai2]->linear_kp)/2 + mut_lin;
     indiv[i]->angular_kp = (tempIndiv[pai1]->angular_kp + tempIndiv[pai2]->angular_kp)/2 + mut_ang;
