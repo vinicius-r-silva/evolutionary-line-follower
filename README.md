@@ -1,2 +1,8 @@
-# evolutionary-line-follower
-An evolutionary algorithm writen in c++ with proporse to make robots follow a line
+# Evolutionary-line-follower
+Um algoritmo evolutivo escrito em c++ cujo propósito é fazer robôs seguirem uma linha
+
+Para a geração inicial do algoritmo, foram criados aleatoriamente 36 conjuntos de 3 constantes (velocidade inicial, coeficiente angular e coeficiente linear), sendo que um conjunto representa um robô. Por meio da utilização de softwares como o ROS e o V-REP, foram testados esses 36 robôs iniciais em um mesmo percurso de linha, e atribuída uma pontuação baseada na distância em que eles percorreram do percurso e a velocidade média.
+
+Para o cruzamento das espécies foi utilizado um método baseado em obter uma lista com as 12 melhores pontuações, e gerar 24 descendentes fazendo uma média aritmética das constantes obtidas por 2 robôs dentre esses 12. Além da média, é acrescentada uma mutação para cada constante, podendo alterar a proporção dessa mutação, caso muitas gerações não apresentem evoluções significativas. Foram avaliados três métodos para o cruzamento das espécies: esse citado anteriormente, o método do Best-Fit e o método do torneio. 
+
+Um dos grandes problemas encontrados nesse algoritmo ao testar os três métodos foi sair do máximo local. O método do Best-Fit indica que muitos robôs farão como o melhor, entretanto, isso os prende num máximo local e isso pode ser ineficiente, pois muitas vezes o máximo local é o que completou a linha mas não fez a curva, consequentemente, os descendentes não realizarão a curva. O torneio acaba por limitar muito a aleatoriedade da escolha de dois robôs, podendo, muitas vezes não gerar descendentes com características do melhor.
