@@ -51,11 +51,9 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
             sendSpeed(robotVel, estacao);                     //send the motor speed to the robot
         }
         indiv[robot]->framesPerdidos = 0;
-        estacao2robot[estacao].robotLinha = (fabs(robot_error.angle) > 1.0) ? false : true;
     }
     else{
       (indiv[robot]->framesPerdidos)++;
-      estacao2robot[estacao].robotLinha = false;
     }
     (indiv[robot]->framesTotal)++;
 

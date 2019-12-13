@@ -83,7 +83,6 @@ int main(int argc, char **argv){
   for(i = 0; i < TAM_ESTACOES; i++){
     estacao2robot[i].robot_station = i;
     estacao2robot[i].id_quadrante = 1;
-    estacao2robot[i].robotLinha = false;
     ini_quadrantes(i);
     ind_next_robot++;
   }
@@ -94,7 +93,6 @@ int main(int argc, char **argv){
     robotPos[i]->x = 0;
     robotPos[i]->y = 0;
     robotPos[i]->theta = 0;
-    robotPos[i]->quadrante = 1;
   }
 
   ros::Subscriber image_sub = n.subscribe("image", 10, getImage_callback);  //subscrive to \image topic
@@ -157,21 +155,17 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   indiv[robot]->tempoNoQuadrante++;
   indiv[robot]->framesTotal++;
 
-  bool movimento_re = robotPos[robot]->quadrante == 1 && quadrante > 2;
-
-  //bool cond_quadrante0 = estacao2robot[estacao].robotLinha;
-  bool cond_quadrante0 = true;
-  bool cond_quadrante1 = robotPos[robot]->quadrante < quadrante && !movimento_re; //robot avancou quadrante 
-  bool cond_quadrante2 = robotPos[robot]->quadrante == 4 && quadrante == 1;       //robot terminou volta
-  bool cond_quadrante3 = robotPos[robot]->quadrante > quadrante || movimento_re;  //cond retroceder
+  bool movimento_re = indiv[robot]->ultimoQuadrante == 1 && quadrante > 2;
+  bool prox_do_pt = fabs(robotPos[robot]->x - estacao2robot[estacao].quadrante[quadrante].posX) < 1;
+  bool cond_quadrante1 = indiv[robot]->ultimoQuadrante < quadrante && !movimento_re; //robot avancou quadrante //passou d0 1->2   2->3   3->4 
+  bool cond_quadrante2 = indiv[robot]->ultimoQuadrante == 4 && quadrante == 1;       //robot terminou volta    //passou do 4->1
+  bool cond_quadrante3 = indiv[robot]->ultimoQuadrante > quadrante || movimento_re;  //cond retroceder
   bool terminou_volta = false;
 
-  if(cond_quadrante0 && (cond_quadrante1 || cond_quadrante2)){
-    atualizar_dist(robot, 0, quadrante, 0.0, 0.0, false);
-    
-    robotPos[robot]->quadrante = quadrante;
+  if(prox_do_pt && (cond_quadrante1 || cond_quadrante2)){
+    atualizar_dist(robot, estacao, quadrante, posX, posY, false);
     estacao2robot[estacao].id_quadrante = quadrante;
-    
+
     indiv[robot]->ultimoQuadrante = quadrante;
     indiv[robot]->tempoNoQuadrante = 0;
     indiv[robot]->qtdQuadrantes++;

@@ -50,7 +50,6 @@ typedef struct{
   float x;
   float y;
   float theta;
-  int quadrante;
 } robot_pos;
 
 typedef struct{
@@ -86,7 +85,6 @@ struct quadrante{
 typedef struct{
   int robot_station;
   int id_quadrante;
-  bool robotLinha;
   struct quadrante *quadrante;
 } estacao;
 
