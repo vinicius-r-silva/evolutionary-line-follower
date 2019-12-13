@@ -81,8 +81,8 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     sprintf (timeQuad, "QuadT: %ld", indiv[robot]->tempoNoQuadrante);
     //sprintf (LostFrames, "Lost: %ld", indiv[robot]->framesPerdidos);
     sprintf (distPercorrida, "dist: %.3f", indiv[robot]->distanciaPercorrida);
-    sprintf (Quad, "qtQuad: %d", indiv[robot]->ultimoQuadrante);
-    sprintf (qtQuad, "dist: %d", indiv[robot]->qtdQuadrantes);
+    sprintf (Quad, "Quad: %d", indiv[robot]->ultimoQuadrante);
+    sprintf (qtQuad, "qtQuad: %d", indiv[robot]->qtdQuadrantes);
     putText(HLines_img, sv0, Point(0,27), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, sang, Point(0,40), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, slin, Point(0,55), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
