@@ -54,7 +54,7 @@ void calc_fitness(int robot){
   double vel_med = (double) (indiv[robot]->distanciaPercorrida / indiv[robot]->framesTotal); 
   fitness += (double) (PESO_DISTANCIA * indiv[robot]->distanciaPercorrida);
   fitness += (double) (PESO_VEL_MED * vel_med);
-  if(isinf(fitness))
+  if(isinf(fitness) || indiv[robot]->distanciaPercorrida < 30)
     indiv[robot]->fitness = 0;
   else
     indiv[robot]->fitness = fitness;
@@ -225,7 +225,7 @@ void torneio(){
 bool check_kill_indiv(int robot){
   return  indiv[robot]->tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE ||
           indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA ||
-          indiv[robot]->qtdQuadrantes > 4 ||
+          indiv[robot]->qtdQuadrantes == 4 ||
           indiv[robot]->qtdQuadrantes < 0;
 }
 
@@ -239,10 +239,10 @@ bool isGenerationEnded(){
 }
 
 
-void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, bool terminou_volta){
+void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, bool morreu){
   double dist = 0;
 
-  if(indiv[robot]->ultimoQuadrante != quadrante){
+  if(!morreu){
     switch (indiv[robot]->ultimoQuadrante){
       case 1: dist = 35; break;
       case 2: dist = 60; break;
@@ -262,10 +262,10 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, b
     double dy2 = pow((posY - Y), 2);
     dist = 10.0 * sqrt(dx2 + dy2);
   }
-  
-  if(isinf(dist) || indiv[robot]->qtdQuadrantes < 0 || dist < 30)
-    dist = 0;
 
+  if(isinf(dist))
+    dist = 0;
+  
   indiv[robot]->distanciaPercorrida += dist;
 
 }
