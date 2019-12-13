@@ -40,6 +40,10 @@ using namespace cv;
 
 #define PLOT_NEW_GENERATION -1
 
+#define MUTATION_MAX     0.100
+#define MUTATION_STEP    0.012
+#define INITIAL_MUTATION 0.025
+
 //--------------------------------------------GLOBALS--------------------------------------------//
 typedef struct{
   float shift;

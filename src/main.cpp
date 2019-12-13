@@ -41,6 +41,8 @@ int ind_next_robot;
 
 int generation;
 
+int sameKing;
+double mutationValue;
 
 double sumFitness;
 double maxFitnessGen;
@@ -68,7 +70,7 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "main");
 
   srand(time(0));
-  initPopulation(true);
+  initPopulation();
 
   char windowName[] = "estacaoX";
   for(i = 0; i < TAM_ESTACOES; i++){
@@ -120,6 +122,7 @@ int main(int argc, char **argv){
   maxFitnessGen = 0;
   maxFitnessTotal = 0;
 
+  mutationValue = INITIAL_MUTATION;
   ros::spin();
   return 0;
 }
@@ -193,7 +196,13 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
         if(fitness > maxFitnessTotal)
           maxFitnessTotal = fitness;
 
+        sameKing = 0;
         updateFitnessGraph();
+      }
+
+      if(fitness == 0){
+        reset_contadores(robot);
+        reset_consts(robot);
       }
     }
     
@@ -215,28 +224,41 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
       medFitnessVec.push_back(sumFitness/TAM_POPULATION);
       updateFitnessGraph();
 
+      if (sameKing){
+        mutationValue += MUTATION_STEP;
+
+        if(mutationValue > MUTATION_MAX)
+          mutationValue = MUTATION_MAX;
+
+        ROS_INFO("same King, mutation: %lf", mutationValue);
+      }
+      else{
+        mutationValue = INITIAL_MUTATION;
+      }
+
       if(indiv[0]->fitness > 0){
-        // initCross();
-        bestFit();
+        initCross();
+        // bestFit();
         // torneio();
       }
       else{ 
         ROS_INFO("reseting pop");
-        initPopulation(false);
         ind_next_robot = 0;
         for(i = 0; i < TAM_ESTACOES; i++){
           estacao2robot[i].robot_station = ind_next_robot;
           ind_next_robot++;
         }
 
-        for(i = 0; i < TAM_POPULATION; i++){
-          reset_contadores(indiv[i]);
-        }
+        // for(i = 0; i < TAM_POPULATION; i++){
+        //   reset_contadores(i);
+        //   reset_consts(i);
+        // }
 
         sumFitness = 0;
         maxFitnessGen = 0;
       }
 
+      sameKing = 1;
 
       ROS_INFO("\n\n----------------------------------New Gen: MaxFit: %lf\n", maxFitnessGen);
     }
