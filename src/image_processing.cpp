@@ -313,5 +313,5 @@ void updateFitnessGraph(){
   }
 
   imshow("graph", graph);
-  imwrite( "BestCross.jpg", graph);
+  imwrite( "bestfit.jpg", graph);
 }

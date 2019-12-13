@@ -25,10 +25,11 @@ double randomize(double inicio_range, double final_range, int casas_precisao){
 }
 
 
-void initPopulation(){
+void initPopulation(bool allocar){
   for(int i = 0; i < TAM_POPULATION; i++){
-    indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
-    indiv[i]->v0=(int16_t)((float) MAX_VALUE_V0         * randomize(-1, 1, 3));
+    if(allocar)
+      indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
+    indiv[i]->v0=(int16_t)((float) MAX_VALUE_V0         * randomize(0, 1, 3));
     indiv[i]->linear_kp  = (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
     indiv[i]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
     reset_contadores(indiv[i]);
@@ -210,7 +211,7 @@ void torneio(){
 bool check_kill_indiv(int robot){
   return  indiv[robot]->tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE ||
           indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA ||
-          indiv[robot]->qtdQuadrantes == 4 ||
+          indiv[robot]->qtdQuadrantes > 4 ||
           indiv[robot]->qtdQuadrantes < 0;
 }
 
@@ -242,7 +243,7 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, b
     dist = 10.0 * sqrt(dx2 + dy2);
   }
   
-  if(isinf(dist) || indiv[robot]->qtdQuadrantes < 0)
+  if(isinf(dist) || indiv[robot]->qtdQuadrantes < 0 || dist < 30)
     dist = 0;
 
   indiv[robot]->distanciaPercorrida += dist;

@@ -12,7 +12,7 @@ void initBestPopulation();
 
 
 //Inicia randomicamente a populacao de melhores
-void initPopulation();
+void initPopulation(bool allocar);
 
 
 //Verifica se individuo deve morrer
