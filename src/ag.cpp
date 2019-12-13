@@ -40,11 +40,12 @@ void calc_fitness(int robot){
 }
 
 
-void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
+void cross(robot_consts *pai, robot_consts *mae, robot_consts *filho){
   double mut_v0, mut_lin, mut_ang;
   mut_v0  = randomize(-0.025*MAX_VALUE_V0, 0.025*MAX_VALUE_V0, 4);
   mut_ang = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
   mut_lin = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
+  reset_contadores(filho);
 
   int parentSum = 0;
   int parentChoice = (int) randomize(-10, 10, 0);
@@ -77,13 +78,8 @@ void makeSon(robot_consts *pai, robot_consts *mae, robot_consts *filho){
   } else {
     filho->linear_kp = mae->linear_kp + mut_lin;
   }
-  reset_contadores(filho);
 }
 
-void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos){
-  makeSon(pai, mae, filhos[0]);
-  makeSon(pai, mae, filhos[1]);
-}
 
 
 bool check_kill_indiv(int robot){
@@ -119,6 +115,8 @@ void atualizar_dist(int robot, int quadrante, int posX, int posY){
     double dy2 = pow((posY - Y), 2);
     dist = 10.0 * sqrt(dx2 + dy2);
   }
+  if(isinf(dist))
+    dist = 0;
 
   indiv[robot]->distanciaPercorrida += dist;
 

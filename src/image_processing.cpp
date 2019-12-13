@@ -191,7 +191,7 @@ void ini_quadrantes(int estacao){
 
 void updateFitnessGraph(){
   int imgHeight = 480;
-  int imgWidth  = 640;
+  int imgWidth  = 1280;
   int Qtd = maxFitnessVec.size();
   Mat graph(imgHeight, imgWidth, CV_8UC3, Scalar(0,0,0));
   
@@ -199,7 +199,7 @@ void updateFitnessGraph(){
   char label[15];
   Point tempPt(0, 0);
   double FitnessTemp = maxFitnessTotal*10/8;
-  double verticalStep = FitnessTemp/imgHeight;
+  double verticalStep = imgHeight/FitnessTemp;
   for(i = 0; i < 4; i++){
     tempPt.y = (imgHeight*(1 + i)/5);
     sprintf(label, "%.1lf", FitnessTemp*(4 - i)/5);
@@ -209,32 +209,45 @@ void updateFitnessGraph(){
   int HorizontalStep = imgWidth/(Qtd+1);
   Point firstPt(0,imgHeight);
   Point secondPt(0,0);
+
+  Point medFirstPt(0,imgHeight);
+  Point medSecondPt(0,0);
   
-  
+  int generation = 0;
+  sprintf(label, "G%d", generation);
+  putText(graph, label, Point(0, imgHeight - 10), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
+
   for(i = 0; i < Qtd; i++){
     secondPt.x += HorizontalStep;
     secondPt.y = imgHeight - maxFitnessVec[i] * verticalStep;
 
-    if(maxFitnessVec[i] == PLOT_NEW_GENERATION)
-      continue;
+    if(maxFitnessVec[i] == PLOT_NEW_GENERATION){
+      generation++;
+      
+      tempPt.x = secondPt.x - 10;
+      if(generation % 2)
+        tempPt.y = imgHeight - 15;
+      else
+        tempPt.y = imgHeight;
+
+      secondPt.y = firstPt.y;
+      sprintf(label, "G%d", generation);
+      line(graph, Point(secondPt.x, 0), Point(secondPt.x, tempPt.y-15), Scalar::all(255), 1, 8, 0);
+      putText(graph, label, tempPt, FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
+
+      medSecondPt.x = secondPt.x;
+      medSecondPt.y = imgHeight - medFitnessVec[generation - 1] * verticalStep;
+      line(graph, medFirstPt, medSecondPt, Scalar(0,255,0), 1, 8, 0);
+      medFirstPt.x = medSecondPt.x;
+      medFirstPt.y = medSecondPt.y;
+    }
 
     line(graph, firstPt, secondPt, Scalar(255,0,0), 1, 8, 0);
-    ROS_INFO("Vec[i]: %0.2lf, MaxTotal: %0.2lf, Points: %d %d (%lf) to %d %d (%lf)", maxFitnessVec[i], maxFitnessTotal, firstPt.x, firstPt.y, (imgHeight - firstPt.y)/verticalStep, secondPt.x, secondPt.y,  (imgHeight - secondPt.y)/verticalStep);
+    // ROS_INFO("Vec[i]: %0.2lf, MaxTotal: %0.2lf, FitnessTemp: %lf, verticalStep: %f, Points: %d %d (%lf) to %d %d (%lf)", maxFitnessVec[i], maxFitnessTotal, FitnessTemp, verticalStep, firstPt.x, firstPt.y, (imgHeight - firstPt.y)/verticalStep, secondPt.x, secondPt.y,  (imgHeight - secondPt.y)/verticalStep);
     firstPt.x = secondPt.x;
     firstPt.y = secondPt.y;
   }
-  // while(i < imgWidth){
-  //   i += HorizontalStep;
-  //   firstPt.x = verticalStep * indiv;
-
-  //   if(maxFitnessVec[i] == PLOT_NEW_GENERATION)
-  //     continue;
-
-  //   line(graph, firstPt, secondPt, Scalar(255,0,0), 1, 8, 0);
-  //   ROS_INFO("%d %d to %d %d", firstPt.x, firstPt.y, secondPt.x, secondPt.y);
-  //   secondPt.x = firstPt.x;
-
-  // }
 
   imshow("graph", graph);
+  imwrite( "BestCross.jpg", graph);
 }

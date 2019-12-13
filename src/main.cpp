@@ -72,8 +72,10 @@ int main(int argc, char **argv){
     namedWindow(windowName, WINDOW_AUTOSIZE); // Create Window
     moveWindow(windowName, 20 +(i%2) * 310,20 + (i/2)*200);
   }
+  namedWindow("graph", WINDOW_AUTOSIZE); // Create Window
+  moveWindow("graph", 640,20);
 
-  pos_indv_atual = 1;
+  pos_indv_atual = 0;
   for(i = 0; i < TAM_ESTACOES; i++){
     estacao2robot[i].robot_station = i;
     estacao2robot[i].id_quadrante = 0;
@@ -121,7 +123,7 @@ int main(int argc, char **argv){
 
 
 bool compareFitness(robot_consts* robot1, robot_consts* robot2){
-  return robot1->fitness < robot2->fitness;
+  return robot1->fitness > robot2->fitness;
 }
 
 //------------------------------------------------------FUNCTIONS------------------------------------------------------//
@@ -196,24 +198,43 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
     reset_robot(estacao);
 
     if(isGenerationEnded()){
-      std::sort(indiv.begin(), indiv.end(), compareFitness);
-      int qtd_pais = (TAM_POPULATION - TAM_BEST) / RAZAO_PAIS_FILHOS;
+      // for(i = 0; i < TAM_POPULATION; i++){
+      //   ROS_INFO("Robot %d. Fit: %lf", i, indiv[i]->fitness);
+      // }
 
-      robot_consts *vet_aux[RAZAO_PAIS_FILHOS];
+      std::sort(indiv.begin(), indiv.end(), compareFitness);
+
       int pai_index;
       int mae_index;
-      
-      for(int j = 0; j < qtd_pais; j++){
-        for(int k = 0; k < RAZAO_PAIS_FILHOS; k++){
-          vet_aux[k] = indiv[TAM_BEST + (RAZAO_PAIS_FILHOS*j)+k];
-        }
-        pai_index = rand() % TAM_BEST;
-        mae_index = rand() % TAM_BEST;
-        while(mae_index == pai_index){
+      int filho_index = TAM_BEST;
+
+      for(i = 0; i < (TAM_POPULATION - TAM_BEST) / 2; i++){
+          pai_index = rand() % TAM_BEST;
           mae_index = rand() % TAM_BEST;
-        }
-        cross(indiv[pai_index], indiv[mae_index], vet_aux);
+          while(mae_index == pai_index){
+            mae_index = rand() % TAM_BEST;
+          }
+
+          ROS_INFO("cross de %d e %d para %d e %d", pai_index, mae_index, filho_index, filho_index + 1);
+
+          cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
+          filho_index++;
+          cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
+          filho_index++;
       }
+      ROS_INFO("transou");
+      
+      // for(int j = 0; j < qtd_pais; j++){
+      //   for(int k = 0; k < RAZAO_PAIS_FILHOS; k++){
+      //     vet_aux[k] = indiv[TAM_BEST + (RAZAO_PAIS_FILHOS*j)+k];
+      //   }
+      //   pai_index = rand() % TAM_BEST;
+      //   mae_index = rand() % TAM_BEST;
+      //   while(mae_index == pai_index){
+      //     mae_index = rand() % TAM_BEST;
+      //   }
+      //   cross(indiv[pai_index], indiv[mae_index], vet_aux);
+      // }
 
       pos_indv_atual = TAM_BEST;
       for(i = 0; i < TAM_ESTACOES; i++){
@@ -223,13 +244,19 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
 
       maxFitnessVec.push_back(PLOT_NEW_GENERATION);
       medFitnessVec.push_back(sumFitness/TAM_POPULATION);
+      updateFitnessGraph();
+
+      // for(i = 0; i < TAM_POPULATION; i++){
+      //   ROS_INFO("Robot %d. Fit: %lf", i, indiv[i]->fitness);
+      // }
 
       sumFitness = 0;
       maxFitnessGen = indiv[0]->fitness;
       for(i = 0; i < TAM_POPULATION; i++){
         sumFitness += indiv[i]->fitness;
       }
-      ROS_INFO("New Gen: MaxFit: %lf", maxFitnessGen);
+
+      ROS_INFO("\n\n----------------------------------New Gen: MaxFit: %lf\n", maxFitnessGen);
     }
   }
 }

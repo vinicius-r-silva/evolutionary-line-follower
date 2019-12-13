@@ -28,10 +28,8 @@ using namespace cv;
 #define TAM_ESTACOES 6
 
 //36 filhos + 12 best, os best nao rodar novamente, pois ja possuem fitness
-#define TAM_POPULATION 48
+#define TAM_POPULATION 36
 #define TAM_BEST 12
-#define RAZAO_PAIS_FILHOS 2
-#define CHANCE_MUTACAO 4
 
 #define MAX_VALUE_V0 250
 #define MAX_VALUE_LINEAR_KP 10

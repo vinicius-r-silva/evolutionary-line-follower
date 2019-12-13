@@ -78,6 +78,11 @@ add_executable(consts_test src/consts_test.cpp)
 target_link_libraries(consts_test ${catkin_LIBRARIES} ${OpenCV_LIBS})
 add_dependencies(consts_test line_follower_generate_messages_cpp)
 
+add_executable(reset_robots src/reset_robots.cpp)
+target_link_libraries(reset_robots ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_dependencies(reset_robots line_follower_generate_messages_cpp)
+
+
 
 
 

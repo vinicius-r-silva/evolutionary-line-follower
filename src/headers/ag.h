@@ -27,8 +27,8 @@ void calc_fitness(int robot);
 void atualizar_dist(int robot, int quadrante, int posX, int posY);
 
 
-//Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 6 indivios novos
-void cross(robot_consts *pai, robot_consts *mae, robot_consts **filhos);
+//Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 1 individuo novo
+void cross(robot_consts *pai, robot_consts *mae, robot_consts *filho);
 
 
 //retorna valor entre inicio_range e final_range com precisao de x casas 
