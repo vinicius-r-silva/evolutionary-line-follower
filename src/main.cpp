@@ -68,7 +68,7 @@ int main(int argc, char **argv){
   ros::init(argc, argv, "main");
 
   srand(time(0));
-  initPopulation();
+  initPopulation(true);
 
   char windowName[] = "estacaoX";
   for(i = 0; i < TAM_ESTACOES; i++){
@@ -221,9 +221,27 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
       medFitnessVec.push_back(sumFitness/TAM_POPULATION);
       updateFitnessGraph();
 
-      // initCross();
-      // bestFit();
-      torneio();
+      if(indiv[0]->fitness > 0){
+        // initCross();
+        bestFit();
+        // torneio();
+      }
+      else{ 
+        ROS_INFO("reseting pop");
+        initPopulation(false);
+        ind_next_robot = 0;
+        for(i = 0; i < TAM_ESTACOES; i++){
+          estacao2robot[i].robot_station = ind_next_robot;
+          ind_next_robot++;
+        }
+
+        for(i = 0; i < TAM_POPULATION; i++){
+          reset_contadores(indiv[i]);
+        }
+
+        sumFitness = 0;
+        maxFitnessGen = 0;
+      }
 
 
       ROS_INFO("\n\n----------------------------------New Gen: MaxFit: %lf\n", maxFitnessGen);
