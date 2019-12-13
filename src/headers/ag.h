@@ -12,7 +12,7 @@ void initBestPopulation();
 
 
 //Inicia randomicamente a populacao de melhores
-void initPopulation(bool allocar);
+void initPopulation();
 
 
 //Verifica se individuo deve morrer
@@ -28,7 +28,7 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, b
 
 
 //Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 1 individuo novo
-void cross(robot_consts *pai, robot_consts *mae, robot_consts *filho);
+void cross(int pai_index, int mae_index, int filho_index);
 
 //make cross 
 void initCross();
@@ -44,7 +44,9 @@ double randomize(double inicio_range, double final_range, int casas_precisao);
 bool isGenerationEnded();
 
 //Reset values default
-void reset_contadores(robot_consts *ind_robot);
+void reset_contadores(int index);
+
+void reset_consts(int index);
 
 
 #endif

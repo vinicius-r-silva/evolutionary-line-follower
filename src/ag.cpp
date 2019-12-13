@@ -17,6 +17,8 @@ extern double maxFitnessTotal;
 extern vector<double> maxFitnessVec;
 extern vector<double> medFitnessVec;
 
+extern double mutationValue;
+
 double randomize(double inicio_range, double final_range, int casas_precisao){
   double div_value = pow(10, casas_precisao) * final_range;
   double total_ran = final_range - inicio_range;
@@ -25,14 +27,13 @@ double randomize(double inicio_range, double final_range, int casas_precisao){
 }
 
 
-void initPopulation(bool allocar){
+void initPopulation(){
   for(int i = 0; i < TAM_POPULATION; i++){
-    if(allocar)
-      indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
+    indiv[i] = (robot_consts*)malloc(sizeof(robot_consts));
     indiv[i]->v0=(int16_t)((float) MAX_VALUE_V0         * randomize(0, 1, 3));
     indiv[i]->linear_kp  = (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
     indiv[i]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
-    reset_contadores(indiv[i]);
+    reset_contadores(i);
     indiv[i]->fitness = -1;
   }
 }
@@ -60,29 +61,32 @@ void calc_fitness(int robot){
 }
 
 
-void cross(robot_consts *pai, robot_consts *mae, robot_consts *filho){
+void cross(int pai_index, int mae_index, int filho_index){
+  if(pai_index >= TAM_POPULATION || mae_index >= TAM_POPULATION || filho_index >= TAM_POPULATION)
+    return;
+
   double mut_v0, mut_lin, mut_ang;
-  mut_v0  = randomize(-0.025*MAX_VALUE_V0, 0.025*MAX_VALUE_V0, 4);
-  mut_ang = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
-  mut_lin = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
-  reset_contadores(filho);
+  mut_v0  = randomize(-mutationValue * MAX_VALUE_V0, mutationValue * MAX_VALUE_V0, 4);
+  mut_ang = randomize(-mutationValue * MAX_VALUE_ANGULAR_KP, mutationValue * MAX_VALUE_ANGULAR_KP, 4);
+  mut_lin = randomize(-mutationValue * MAX_VALUE_LINEAR_KP, mutationValue * MAX_VALUE_LINEAR_KP, 4);
+  reset_contadores(filho_index);
 
   int parentSum = 0;
   int parentChoice = (int) randomize(-10, 10, 0);
   if(parentChoice < 0){
-    filho->v0 = pai->v0 + mut_v0;
+    indiv[filho_index]->v0 = indiv[pai_index]->v0 + mut_v0;
     parentSum++;
   } else {
-    filho->v0 = mae->v0 + mut_v0;
+    indiv[filho_index]->v0 = indiv[mae_index]->v0 + mut_v0;
     parentSum--;
   }
 
   parentChoice = (int) randomize(-10, 10, 0);
   if(parentChoice < 0){
-    filho->angular_kp = pai->angular_kp + mut_ang;
+    indiv[filho_index]->angular_kp = indiv[pai_index]->angular_kp + mut_ang;
     parentSum++;
   } else {
-    filho->angular_kp = mae->angular_kp + mut_ang;
+    indiv[filho_index]->angular_kp = indiv[mae_index]->angular_kp + mut_ang;
     parentSum--;
   }
 
@@ -94,9 +98,9 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts *filho){
     parentChoice = (int) randomize(-10, 10, 0);
     
   if(parentChoice < 0){
-    filho->linear_kp = pai->linear_kp + mut_lin;
+    indiv[filho_index]->linear_kp = indiv[pai_index]->linear_kp + mut_lin;
   } else {
-    filho->linear_kp = mae->linear_kp + mut_lin;
+    indiv[filho_index]->linear_kp = indiv[mae_index]->linear_kp + mut_lin;
   }
 }
 
@@ -104,23 +108,31 @@ void initCross(){
   int i;
   int pai_index;
   int mae_index;
+  int max_best_index = 0;
   int filho_index = TAM_BEST;
 
-  for(i = 0; i < (TAM_POPULATION - TAM_BEST) / 2; i++){
-      pai_index = rand() % TAM_BEST;
+  while(max_best_index < TAM_BEST && indiv[max_best_index++]->fitness > 0);
+  if(max_best_index != TAM_BEST){
+    ROS_INFO("max_best_index != TAM_BEST");
+  }
+
+  ROS_INFO("max_best_index: %d", max_best_index);
+
+  for(i = 0; i < (TAM_POPULATION - max_best_index) / 2; i++){
+      pai_index = rand() % max_best_index;
       mae_index = rand() % TAM_BEST;
       while(mae_index == pai_index){
-        mae_index = rand() % TAM_BEST;
+        mae_index = rand() % max_best_index;
       }
 
-      cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
+      cross(pai_index, mae_index, filho_index);
       filho_index++;
-      cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
+      cross(pai_index, mae_index, filho_index);
       filho_index++;
   }
 
 
-  ind_next_robot = TAM_BEST;
+  ind_next_robot = max_best_index;
   for(i = 0; i < TAM_ESTACOES; i++){
     estacao2robot[i].robot_station = ind_next_robot;
     ind_next_robot++;
@@ -128,7 +140,7 @@ void initCross(){
 
   sumFitness = 0;
   maxFitnessGen = indiv[0]->fitness;
-  for(i = 0; i < TAM_BEST; i++){
+  for(i = 0; i < max_best_index; i++){
     sumFitness += indiv[i]->fitness;
   }
 }
@@ -138,10 +150,13 @@ void bestFit(){
   double mut_v0, mut_lin, mut_ang;
 
   for(i = 1; i < TAM_POPULATION; i++){
-    reset_contadores(indiv[i]);
-    mut_v0  = randomize(-0.025*MAX_VALUE_V0, 0.025*MAX_VALUE_V0, 4);
-    mut_ang = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
-    mut_lin = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
+    if(indiv[i]->fitness == 0)
+      continue;
+
+    reset_contadores(i);
+    mut_v0  = randomize(-mutationValue * MAX_VALUE_V0, mutationValue * MAX_VALUE_V0, 4);
+    mut_ang = randomize(-mutationValue * MAX_VALUE_ANGULAR_KP, mutationValue * MAX_VALUE_ANGULAR_KP, 4);
+    mut_lin = randomize(-mutationValue * MAX_VALUE_LINEAR_KP, mutationValue * MAX_VALUE_LINEAR_KP, 4);
 
     indiv[i]->v0 = (indiv[0]->v0 + indiv[i]->v0)/2 + mut_v0;
     indiv[i]->linear_kp = (indiv[0]->linear_kp + indiv[i]->linear_kp)/2 + mut_lin;
@@ -158,9 +173,6 @@ void bestFit(){
   maxFitnessGen = indiv[0]->fitness;
 }
 
-
-
-
 void torneio(){
   int i;
   int a, b, pai1, pai2;
@@ -168,11 +180,13 @@ void torneio(){
   vector<robot_consts*> tempIndiv(TAM_POPULATION);
 
   copyPop(&tempIndiv);
+  int maxIndex = 1;
+  while(maxIndex < TAM_POPULATION && indiv[maxIndex++]->fitness > 0);
 
   for (i = 1; i < TAM_POPULATION; i++){
     // Sorteia dois individuos para 1ro torneio
-    a = (int)(randomize(0, TAM_POPULATION, 0));
-    b = (int)(randomize(0, TAM_POPULATION, 0));
+    a = (int)(randomize(0, maxIndex, 0));
+    b = (int)(randomize(0, maxIndex, 0));
 
     if (tempIndiv[a]->fitness > tempIndiv[b]->fitness)
         pai1 = a;
@@ -188,11 +202,11 @@ void torneio(){
     else
         pai2 = b;
     
-    mut_v0  = randomize(-0.025*MAX_VALUE_V0, 0.025*MAX_VALUE_V0, 4);
-    mut_ang = randomize(-0.025*MAX_VALUE_ANGULAR_KP, 0.025*MAX_VALUE_ANGULAR_KP, 4);
-    mut_lin = randomize(-0.025*MAX_VALUE_LINEAR_KP, 0.025*MAX_VALUE_LINEAR_KP, 4);
+    mut_v0  = randomize(-mutationValue * MAX_VALUE_V0, mutationValue * MAX_VALUE_V0, 4);
+    mut_ang = randomize(-mutationValue * MAX_VALUE_ANGULAR_KP, mutationValue * MAX_VALUE_ANGULAR_KP, 4);
+    mut_lin = randomize(-mutationValue * MAX_VALUE_LINEAR_KP, mutationValue * MAX_VALUE_LINEAR_KP, 4);
     
-    reset_contadores(indiv[i]);
+    reset_contadores(i);
     indiv[i]->v0 = (tempIndiv[pai1]->v0 + tempIndiv[pai2]->v0)/2 + mut_v0;
     indiv[i]->linear_kp = (tempIndiv[pai1]->linear_kp + tempIndiv[pai2]->linear_kp)/2 + mut_lin;
     indiv[i]->angular_kp = (tempIndiv[pai1]->angular_kp + tempIndiv[pai2]->angular_kp)/2 + mut_ang;
@@ -251,11 +265,17 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, b
 
 }
 
-void reset_contadores(robot_consts *ind_robot){
-  ind_robot->framesPerdidos   = 0;
-  ind_robot->qtdQuadrantes    = 0;
-  ind_robot->tempoNoQuadrante = 0;
-  ind_robot->framesTotal       = 0;
-  ind_robot->ultimoQuadrante   = 1;
-  ind_robot->distanciaPercorrida = 0;
+void reset_consts(int index){
+  indiv[index]->v0=(int16_t)((float) MAX_VALUE_V0         * randomize( 0, 1, 3));
+  indiv[index]->linear_kp =  (float) MAX_VALUE_LINEAR_KP  * randomize(-1, 1, 3);
+  indiv[index]->angular_kp = (float) MAX_VALUE_ANGULAR_KP * randomize(-1, 1, 3);
+}
+
+void reset_contadores(int index){
+  indiv[index]->framesPerdidos   = 0;
+  indiv[index]->qtdQuadrantes    = 0;
+  indiv[index]->tempoNoQuadrante = 0;
+  indiv[index]->framesTotal       = 0;
+  indiv[index]->ultimoQuadrante   = 1;
+  indiv[index]->distanciaPercorrida = 0;
 }
