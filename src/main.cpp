@@ -134,7 +134,6 @@ bool compareFitness(robot_consts* robot1, robot_consts* robot2){
 //callback from robot_pos topic
 //updates the current positon of the robot
 void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
-
   int i = 0;
   int estacao = msg->data[0];
   int robot = estacao2robot[estacao].robot_station;
@@ -155,29 +154,30 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   indiv[robot]->tempoNoQuadrante++;
   indiv[robot]->framesTotal++;
 
-  bool movimento_re = indiv[robot]->ultimoQuadrante == 1 && quadrante > 2;
-  bool prox_do_pt = fabs(robotPos[robot]->x - estacao2robot[estacao].quadrante[quadrante].posX) < 1;
-  bool cond_quadrante1 = indiv[robot]->ultimoQuadrante < quadrante && !movimento_re; //robot avancou quadrante //passou d0 1->2   2->3   3->4 
-  bool cond_quadrante2 = indiv[robot]->ultimoQuadrante == 4 && quadrante == 1;       //robot terminou volta    //passou do 4->1
-  bool cond_quadrante3 = indiv[robot]->ultimoQuadrante > quadrante || movimento_re;  //cond retroceder
+  bool prox_do_pto = true;
+  if(quadrante == 2)
+    prox_do_pto = fabs(robotPos[robot]->x - estacao2robot[estacao].quadrante[1].posX) < 1;
+
+  bool avanc_quad = indiv[robot]->ultimoQuadrante < quadrante || (indiv[robot]->ultimoQuadrante == 4 && quadrante == 1);
+  bool retro_quad = indiv[robot]->ultimoQuadrante > quadrante;
+  bool atualiza_max_quadrante = avanc_quad && indiv[robot]->maxQuadrante != quadrante;
   bool terminou_volta = false;
 
-  if(prox_do_pt && (cond_quadrante1 || cond_quadrante2)){
+  if(prox_do_pto && atualiza_max_quadrante){
     atualizar_dist(robot, estacao, quadrante, posX, posY, false);
-    estacao2robot[estacao].id_quadrante = quadrante;
-
-    indiv[robot]->ultimoQuadrante = quadrante;
+    indiv[robot]->maxQuadrante = quadrante;
     indiv[robot]->tempoNoQuadrante = 0;
     indiv[robot]->qtdQuadrantes++;
-    if(indiv[robot]->qtdQuadrantes == 4){
+    if(indiv[robot]->qtdQuadrantes == 4)
       terminou_volta = true;
-    }
-  }else if(cond_quadrante3){
+  }else if(retro_quad){
     indiv[robot]->qtdQuadrantes--;
   }
-
-  if(check_kill_indiv(robot) || movimento_re){
-    atualizar_dist(robot, estacao, quadrante, posX, posY, terminou_volta);
+  indiv[robot]->ultimoQuadrante = quadrante;
+  
+  if(check_kill_indiv(robot) || (!prox_do_pto && atualiza_max_quadrante)){
+    if(!terminou_volta)
+      atualizar_dist(robot, estacao, quadrante, posX, posY, true);
     calc_fitness(robot);
     
     //Debug
