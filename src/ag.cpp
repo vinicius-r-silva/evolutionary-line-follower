@@ -54,7 +54,7 @@ void calc_fitness(int robot){
   double vel_med = (double) (indiv[robot]->distanciaPercorrida / indiv[robot]->framesTotal); 
   fitness += (double) (PESO_DISTANCIA * indiv[robot]->distanciaPercorrida);
   fitness += (double) (PESO_VEL_MED * vel_med);
-  if(isinf(fitness) || indiv[robot]->distanciaPercorrida < 30)
+  if(isinf(fitness) || indiv[robot]->distanciaPercorrida < 21)
     indiv[robot]->fitness = 0;
   else
     indiv[robot]->fitness = fitness;
@@ -223,9 +223,21 @@ void torneio(){
 }
 
 bool check_kill_indiv(int robot){
+  if(indiv[robot]->tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE)
+    ROS_INFO("Robot %d morto por tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE", robot);
+
+  if(indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA)
+    ROS_INFO("Robot %d morto por framesPerdidos > MAX_FRAMES_SEM_LINHA", robot);
+
+  if(indiv[robot]->qtdQuadrantes >= 4)
+    ROS_INFO("Robot %d morto por qtdQuadrantes >= 4. qtdQuadrantes: %d", robot, indiv[robot]->qtdQuadrantes);
+
+  if(indiv[robot]->qtdQuadrantes < 0)
+    ROS_INFO("Robot %d morto por qtdQuadrantes < 0. tdQuadrantes: %d", robot, indiv[robot]->qtdQuadrantes);
+
   return  indiv[robot]->tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE ||
           indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA ||
-          indiv[robot]->qtdQuadrantes == 4 ||
+          indiv[robot]->qtdQuadrantes >= 4 ||
           indiv[robot]->qtdQuadrantes < 0;
 }
 
@@ -244,10 +256,10 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, b
 
   if(!morreu){
     switch (indiv[robot]->ultimoQuadrante){
-      case 1: dist = 35; break;
-      case 2: dist = 60; break;
-      case 3: dist = 40; break;
-      case 4: dist = 15; break;
+      case 0: dist = 35; break;
+      case 1: dist = 60; break;
+      case 2: dist = 40; break;
+      case 3: dist = 15; break;
     }
   }else{
     if(quadrante == 4){
@@ -279,6 +291,6 @@ void reset_contadores(int index){
   indiv[index]->qtdQuadrantes    = 0;
   indiv[index]->tempoNoQuadrante = 0;
   indiv[index]->framesTotal       = 0;
-  indiv[index]->ultimoQuadrante   = 1;
+  indiv[index]->ultimoQuadrante   = 0;
   indiv[index]->distanciaPercorrida = 0;
 }

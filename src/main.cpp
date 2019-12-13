@@ -161,7 +161,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   if(quadrante == 1)
     prox_do_pto = fabs(robotPos[robot]->x - estacao2robot[estacao].quadrante[1].posX) < 1;
 
-  bool avanc_quad = indiv[robot]->ultimoQuadrante < quadrante || (indiv[robot]->ultimoQuadrante == 4 && quadrante == 1);
+  bool avanc_quad = indiv[robot]->ultimoQuadrante < quadrante || (indiv[robot]->ultimoQuadrante == 3 && quadrante == 0);
   bool retro_quad = indiv[robot]->ultimoQuadrante > quadrante;
   bool atualiza_max_quadrante = avanc_quad && indiv[robot]->maxQuadrante != quadrante;
   bool terminou_volta = false;
@@ -171,7 +171,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
     indiv[robot]->maxQuadrante = quadrante;
     indiv[robot]->tempoNoQuadrante = 0;
     indiv[robot]->qtdQuadrantes++;
-    if(indiv[robot]->qtdQuadrantes == 4)
+    if(indiv[robot]->qtdQuadrantes >= 4)
       terminou_volta = true;
   }else if(retro_quad){
     indiv[robot]->qtdQuadrantes--;
