@@ -158,7 +158,7 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   indiv[robot]->framesTotal++;
 
   bool prox_do_pto = true;
-  if(quadrante == 2)
+  if(quadrante == 1)
     prox_do_pto = fabs(robotPos[robot]->x - estacao2robot[estacao].quadrante[1].posX) < 1;
 
   bool avanc_quad = indiv[robot]->ultimoQuadrante < quadrante || (indiv[robot]->ultimoQuadrante == 4 && quadrante == 1);
