@@ -83,6 +83,7 @@ int main(int argc, char **argv){
   for(i = 0; i < TAM_ESTACOES; i++){
     estacao2robot[i].robot_station = i;
     estacao2robot[i].id_quadrante = 1;
+    estacao2robot[i].robotLinha = false;
     ini_quadrantes(i);
     ind_next_robot++;
   }
@@ -155,25 +156,34 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   //contadores
   indiv[robot]->tempoNoQuadrante++;
   indiv[robot]->framesTotal++;
-  
-  bool atualizar_quadrante = robotPos[robot]->quadrante < quadrante || (robotPos[robot]->quadrante == 4 && quadrante == 1);
-  if(atualizar_quadrante){
-    atualizar_dist(robot, 0, quadrante, 0.0, 0.0);
+
+  bool movimento_re = robotPos[robot]->quadrante == 1 && quadrante > 2;
+
+  //bool cond_quadrante0 = estacao2robot[estacao].robotLinha;
+  bool cond_quadrante0 = true;
+  bool cond_quadrante1 = robotPos[robot]->quadrante < quadrante && !movimento_re; //robot avancou quadrante 
+  bool cond_quadrante2 = robotPos[robot]->quadrante == 4 && quadrante == 1;       //robot terminou volta
+  bool cond_quadrante3 = robotPos[robot]->quadrante > quadrante || movimento_re;  //cond retroceder
+  bool terminou_volta = false;
+
+  if(cond_quadrante0 && (cond_quadrante1 || cond_quadrante2)){
+    atualizar_dist(robot, 0, quadrante, 0.0, 0.0, false);
     
     robotPos[robot]->quadrante = quadrante;
     estacao2robot[estacao].id_quadrante = quadrante;
     
     indiv[robot]->ultimoQuadrante = quadrante;
-    indiv[robot]->maxQtdQuadrante = quadrante;
     indiv[robot]->tempoNoQuadrante = 0;
     indiv[robot]->qtdQuadrantes++;
-
-  }else if(indiv[robot]->ultimoQuadrante != quadrante){
+    if(indiv[robot]->qtdQuadrantes == 4){
+      terminou_volta = true;
+    }
+  }else if(cond_quadrante3){
     indiv[robot]->qtdQuadrantes--;
   }
 
-  if(check_kill_indiv(robot)){
-    atualizar_dist(robot, estacao, quadrante, posX, posY);
+  if(check_kill_indiv(robot) || movimento_re){
+    atualizar_dist(robot, estacao, quadrante, posX, posY, terminou_volta);
     calc_fitness(robot);
     
     //Debug

@@ -87,7 +87,7 @@ void cross(robot_consts *pai, robot_consts *mae, robot_consts *filho){
 bool check_kill_indiv(int robot){
   return  indiv[robot]->tempoNoQuadrante > MAX_FRAMES_POR_QUADRANTE ||
           indiv[robot]->framesPerdidos > MAX_FRAMES_SEM_LINHA ||
-          indiv[robot]->qtdQuadrantes == 8||
+          indiv[robot]->qtdQuadrantes == 4 ||
           indiv[robot]->qtdQuadrantes < 0;
 }
 
@@ -102,27 +102,25 @@ bool isGenerationEnded(){
 }
 
 
-void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY){
+void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, bool terminou_volta){
   double dist = 0;
-  
-  if(indiv[robot]->qtdQuadrantes >= 0){
-    
-    if(indiv[robot]->ultimoQuadrante != quadrante){
-      switch (quadrante){
-        case 1: dist = 35; break;
-        case 2: dist = 60; break;
-        case 3: dist = 40; break;
-        case 4: dist = 15; break;
-      }
-    }else{
-      double X = estacao2robot[estacao].quadrante[quadrante].posX;
-      double Y = estacao2robot[estacao].quadrante[quadrante].posY;
-      double dx2 = pow((posX - X), 2);
-      double dy2 = pow((posY - Y), 2);
-      dist = 10.0 * sqrt(dx2 + dy2);
+
+  if(indiv[robot]->ultimoQuadrante != quadrante){
+    switch (indiv[robot]->ultimoQuadrante){
+      case 1: dist = 35; break;
+      case 2: dist = 60; break;
+      case 3: dist = 40; break;
+      case 4: dist = 15; break;
     }
+  }else if(!terminou_volta){
+    double X = estacao2robot[estacao].quadrante[quadrante].posX;
+    double Y = estacao2robot[estacao].quadrante[quadrante].posY;
+    double dx2 = pow((posX - X), 2);
+    double dy2 = pow((posY - Y), 2);
+    dist = 10.0 * sqrt(dx2 + dy2);
   }
-  if(isinf(dist))
+  
+  if(isinf(dist) || indiv[robot]->qtdQuadrantes < 0)
     dist = 0;
 
   indiv[robot]->distanciaPercorrida += dist;
@@ -131,7 +129,6 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY){
 
 void reset_contadores(robot_consts *ind_robot){
   ind_robot->framesPerdidos   = 0;
-  ind_robot->maxQtdQuadrante  = 0;
   ind_robot->qtdQuadrantes    = 0;
   ind_robot->tempoNoQuadrante = 0;
   ind_robot->framesTotal       = 0;

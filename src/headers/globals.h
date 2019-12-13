@@ -68,7 +68,6 @@ typedef struct{
   //Check kill
   uint8_t qtdQuadrantes;    //Soma 1 toda vez que avança quadrante (2 voltas = 8 quadrantes), sub 1 toda vez que volta quadrante
   uint8_t ultimoQuadrante;  //Ultimo quadrante que o individuo estava (para comparacao)
-  uint8_t maxQtdQuadrante;  //Valor do maior quadrante que o individuo chegou
   uint64_t tempoNoQuadrante;  //Soma frames no mesmo quadrante, reseta apenas qndo maxQtdQuadrante e' atualizado
   uint64_t framesPerdidos;    //Soma 1 toda vez que existe um frame sem linha, reseta quando encontra linha
   
@@ -87,6 +86,7 @@ struct quadrante{
 typedef struct{
   int robot_station;
   int id_quadrante;
+  bool robotLinha;
   struct quadrante *quadrante;
 } estacao;
 

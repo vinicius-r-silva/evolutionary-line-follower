@@ -51,9 +51,11 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
             sendSpeed(robotVel, estacao);                     //send the motor speed to the robot
         }
         indiv[robot]->framesPerdidos = 0;
+        estacao2robot[estacao].robotLinha = (fabs(robot_error.angle) > 1.0) ? false : true;
     }
     else{
       (indiv[robot]->framesPerdidos)++;
+      estacao2robot[estacao].robotLinha = false;
     }
     (indiv[robot]->framesTotal)++;
 
@@ -69,14 +71,19 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     char robotName[15];
     char timeQuad[25];
     char LostFrames[25];
+    char distPercorrida[25];
     sprintf (sv0, "v0 : %d", consts.v0);
-    sprintf (sang, "ang: %.3f", consts.angular_kp);
+
+    sprintf (sang, "ang: %.3f", robot_error.angle);
+    // sprintf (sang, "ang: %.3f", consts.angular_kp);
+
     sprintf (slin, "lin: %.3f", consts.linear_kp);
     sprintf (ve, "ve: %d", robotVel.Ve);
     sprintf (vd, "vd: %d", robotVel.Vd);
     sprintf (robotName, "robot: %d", robot);
     sprintf (timeQuad, "QuadT: %ld", indiv[robot]->tempoNoQuadrante);
     sprintf (LostFrames, "Lost: %ld", indiv[robot]->framesPerdidos);
+    sprintf (distPercorrida, "dist: %.3f", indiv[robot]->distanciaPercorrida);
     putText(HLines_img, sv0, Point(0,27), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, sang, Point(0,40), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, slin, Point(0,55), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
@@ -84,6 +91,7 @@ void getImage_callback(const sensor_msgs::Image::ConstPtr& msg){
     putText(HLines_img, vd, Point(0,85), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, timeQuad, Point(0,97), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, LostFrames, Point(0,110), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
+    putText(HLines_img, distPercorrida, Point(0,123), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     putText(HLines_img, robotName, Point(0,15), FONT_HERSHEY_PLAIN, 1, Scalar::all(255), 1, 8);
     imshow(windowName, HLines_img);       //shows the image with the choosen line printed on it
     waitKey(1);
