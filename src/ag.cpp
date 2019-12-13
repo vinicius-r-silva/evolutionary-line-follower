@@ -127,7 +127,7 @@ void initCross(){
 
   sumFitness = 0;
   maxFitnessGen = indiv[0]->fitness;
-  for(i = 0; i < TAM_POPULATION; i++){
+  for(i = 0; i < TAM_BEST; i++){
     sumFitness += indiv[i]->fitness;
   }
 }
