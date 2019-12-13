@@ -218,14 +218,14 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
             mae_index = rand() % TAM_BEST;
           }
 
-          ROS_INFO("cross de %d e %d para %d e %d", pai_index, mae_index, filho_index, filho_index + 1);
+          // ROS_INFO("cross de %d e %d para %d e %d", pai_index, mae_index, filho_index, filho_index + 1);
 
           cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
           filho_index++;
           cross(indiv[pai_index], indiv[mae_index], indiv[filho_index]);
           filho_index++;
       }
-      ROS_INFO("transou");
+      // ROS_INFO("transou");
       
       // for(int j = 0; j < qtd_pais; j++){
       //   for(int k = 0; k < RAZAO_PAIS_FILHOS; k++){
