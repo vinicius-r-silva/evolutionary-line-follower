@@ -30,6 +30,10 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY);
 //Realiza o cross(cruzamento de cromossomos) de 2 individuos best para formar 1 individuo novo
 void cross(robot_consts *pai, robot_consts *mae, robot_consts *filho);
 
+//make cross 
+void initCross();
+
+void bestFit();
 
 //retorna valor entre inicio_range e final_range com precisao de x casas 
 double randomize(double inicio_range, double final_range, int casas_precisao);
@@ -39,5 +43,6 @@ bool isGenerationEnded();
 
 //Reset values default
 void reset_contadores(robot_consts *ind_robot);
+
 
 #endif
