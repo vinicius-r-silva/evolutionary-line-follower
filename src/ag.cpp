@@ -51,9 +51,13 @@ void copyPop(vector<robot_consts*> *tempIndiv){
 
 void calc_fitness(int robot){
   double fitness = 0.0;
-  double vel_med = (double) (indiv[robot]->distanciaPercorrida / indiv[robot]->framesTotal); 
+  double vel_med = (double) ((double)(indiv[robot]->distanciaPercorrida * 100) / (double)indiv[robot]->framesTotal); 
   fitness += (double) (PESO_DISTANCIA * indiv[robot]->distanciaPercorrida);
   fitness += (double) (PESO_VEL_MED * vel_med);
+
+  // if(indiv[robot]->distanciaPercorrida == 150)
+    ROS_INFO("Velocidade Média: %lf", vel_med);
+
   if(isinf(fitness) || indiv[robot]->distanciaPercorrida < 21)
     indiv[robot]->fitness = 0;
   else
@@ -293,4 +297,5 @@ void reset_contadores(int index){
   indiv[index]->framesTotal       = 0;
   indiv[index]->ultimoQuadrante   = 0;
   indiv[index]->distanciaPercorrida = 0;
+  indiv[index]->maxQuadrante = 0;
 }

@@ -3,8 +3,8 @@
 
 #include "globals.h"
 
-#define PESO_DISTANCIA  6
-#define PESO_VEL_MED    4
+#define PESO_DISTANCIA  4
+#define PESO_VEL_MED    6
 #define TX_FPS 30
 
 //Inicia a populacao de individuos

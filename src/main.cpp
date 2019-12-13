@@ -166,6 +166,13 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
   bool atualiza_max_quadrante = avanc_quad && indiv[robot]->maxQuadrante != quadrante;
   bool terminou_volta = false;
 
+  if(estacao == 0 && !prox_do_pto && atualiza_max_quadrante){
+    if(!prox_do_pto)
+      ROS_INFO("!prox_do_pto");
+  } else if(estacao == 0 && atualiza_max_quadrante){
+      ROS_INFO("passou prox_do_pto");
+  }
+
   if(prox_do_pto && atualiza_max_quadrante){
     atualizar_dist(robot, estacao, quadrante, posX, posY, false);
     indiv[robot]->maxQuadrante = quadrante;
@@ -237,8 +244,8 @@ void getPosition_callback(const std_msgs::Float32MultiArray::ConstPtr& msg){
       }
 
       if(indiv[0]->fitness > 0){
-        initCross();
-        // bestFit();
+        // initCross();
+        bestFit();
         // torneio();
       }
       else{ 
