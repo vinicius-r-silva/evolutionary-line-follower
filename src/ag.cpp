@@ -235,7 +235,6 @@ bool isGenerationEnded(){
     if(estacao2robot[i].robot_station != -1)
       return false;
   }
-
   return true;
 }
 
