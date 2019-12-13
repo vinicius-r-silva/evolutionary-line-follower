@@ -249,7 +249,7 @@ void atualizar_dist(int robot, int estacao, int quadrante, int posX, int posY, b
       case 3: dist = 40; break;
       case 4: dist = 15; break;
     }
-  }else if(!terminou_volta){
+  }else{
     ROS_INFO("------------\nQuadrante: %d\n", quadrante);
 
     if(quadrante == 4){
